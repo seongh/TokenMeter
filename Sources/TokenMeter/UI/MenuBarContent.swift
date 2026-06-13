@@ -3,13 +3,31 @@ import SwiftUI
 struct MenuBarLabel: View {
     @ObservedObject var state: AppState
     var body: some View {
-        let today = state.todayBucket?.totals.totalTokens ?? 0
         HStack(spacing: 4) {
-            Image(systemName: "gauge.with.dots.needle.50percent")
-            Text(Format.tokens(today))
+            Image(systemName: iconName)
+            Text(labelText)
                 .monospacedDigit()
                 .font(.system(size: 12, weight: .medium))
         }
+    }
+
+    /// Active session label: "1h 42m · 4.5M" (time-to-reset + tokens used in
+    /// that session). Falls back to today's total tokens when no active session.
+    private var labelText: String {
+        if let s = state.activeSession {
+            let used = Format.tokens(s.totals.totalTokens)
+            return "\(Format.clockShort(s.remaining)) · \(used)"
+        }
+        return Format.tokens(state.todayBucket?.totals.totalTokens ?? 0)
+    }
+
+    private var iconName: String {
+        guard let s = state.activeSession else { return "gauge.with.dots.needle.0percent" }
+        let pct = Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget))
+        if pct >= 0.95 { return "gauge.with.dots.needle.100percent" }
+        if pct >= 0.66 { return "gauge.with.dots.needle.67percent" }
+        if pct >= 0.33 { return "gauge.with.dots.needle.50percent" }
+        return "gauge.with.dots.needle.33percent"
     }
 }
 
@@ -94,12 +112,23 @@ struct MenuBarContent: View {
                 let pct = min(1.0, Double(used) / Double(budget))
                 HStack {
                     Text(Format.tokens(used)).font(.title3.monospacedDigit().bold())
-                    Text("/ \(Format.tokens(budget))")
+                    Text("/ \(Format.tokens(budget)) tok")
                         .font(.caption).foregroundStyle(.secondary)
                     Spacer()
                     Text("\(Int(pct * 100))%").font(.caption.monospacedDigit())
                 }
                 ProgressView(value: pct).tint(pct > 0.85 ? .red : .accentColor)
+                let msgs = s.totals.messages
+                let msgBudget = max(1, state.sessionMessageBudget)
+                let msgPct = min(1.0, Double(msgs) / Double(msgBudget))
+                HStack {
+                    Text("\(msgs)").font(.caption.monospacedDigit().bold())
+                    Text("/ \(msgBudget) msg")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(Int(msgPct * 100))%").font(.caption.monospacedDigit())
+                }
+                ProgressView(value: msgPct).tint(msgPct > 0.85 ? .red : .accentColor)
             } else {
                 Text("No active session").foregroundStyle(.secondary).font(.caption)
             }

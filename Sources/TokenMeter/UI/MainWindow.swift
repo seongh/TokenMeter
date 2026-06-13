@@ -25,13 +25,12 @@ struct MainWindow: View {
                 VStack(alignment: .leading, spacing: 16) {
                     folderAccessCardIfNeeded
                     summaryCards
+                    efficiencyCard
                     chartCard
                     mcpCard
                     projectCard
                     topMessagesCard
                     sessionsCard
-                    apiKeysCard
-                    detectedToolsCard
                     settingsCard
                 }
                 .padding(20)
@@ -185,6 +184,44 @@ struct MainWindow: View {
         }
     }
 
+    private var efficiencyCard: some View {
+        let a = state.modelEfficiency(days: range.days)
+        let pct = a.totalOpusMessages > 0
+            ? Double(a.sonnetCandidateCount) / Double(a.totalOpusMessages)
+            : 0
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "scale.3d").foregroundStyle(.purple)
+                Text("Model efficiency — last \(range.days) days").font(.headline)
+                Spacer()
+                Text(Format.usd(a.estimatedSavingsUSD))
+                    .font(.title3.bold().monospacedDigit())
+                    .foregroundStyle(.green)
+            }
+            if a.totalOpusMessages == 0 {
+                Text("No Opus messages in this window — nothing to analyze.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 16) {
+                    statBlock(title: "Opus messages", value: "\(a.totalOpusMessages)")
+                    statBlock(title: "Sonnet-candidate", value: "\(a.sonnetCandidateCount)")
+                    statBlock(title: "Share", value: "\(Int(pct*100))%")
+                }
+                Text("Heuristic: an Opus message is flagged as a Sonnet-candidate when its prompt + output were both small enough that Sonnet 4.6 would probably have produced an equivalent answer. The number on the right is your estimated cost saving if those messages had run on Sonnet instead. **This is a guess, not a recommendation** — Opus is genuinely better for complex reasoning even on short prompts.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func statBlock(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value).font(.title3.bold().monospacedDigit())
+            Text(title).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
     private var mcpCard: some View {
         let totals = state.mcpToolTotals(days: range.days)
         return VStack(alignment: .leading, spacing: 8) {
@@ -333,6 +370,11 @@ struct MainWindow: View {
                 Spacer()
                 BudgetField(value: $state.weeklyTokenBudget)
             }
+            HStack {
+                Text("Session message budget")
+                Spacer()
+                BudgetField(value: $state.sessionMessageBudget)
+            }
             Divider().padding(.vertical, 2)
             Toggle("Notify at 80% / 95% of session budget", isOn: $state.notificationsEnabled)
             Divider().padding(.vertical, 2)
@@ -352,51 +394,6 @@ struct MainWindow: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private var apiKeysCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("API keys").font(.headline)
-            Text("Keys are stored in the macOS Keychain. Use **admin** keys (Anthropic: sk-ant-admin-…, OpenAI: sk-admin-…) — standard runtime keys cannot read usage.")
-                .font(.caption).foregroundStyle(.secondary)
-            KeyRow(label: "Anthropic admin key",
-                   account: "anthropic_admin_key",
-                   placeholder: "sk-ant-admin-…",
-                   provider: .anthropicAPI,
-                   state: state)
-            KeyRow(label: "OpenAI admin key",
-                   account: "openai_admin_key",
-                   placeholder: "sk-admin-…",
-                   provider: .openAIAPI,
-                   state: state)
-        }
-        .padding(16)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private var detectedToolsCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Detected AI tools").font(.headline)
-            if state.detectedInstalls.isEmpty {
-                Text("No additional AI tool installs found.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else {
-                ForEach(state.detectedInstalls) { d in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: d.dataExposed ? "checkmark.circle.fill" : "info.circle")
-                            .foregroundStyle(d.dataExposed ? .green : .orange)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(d.name).font(.body.weight(.semibold))
-                            Text(d.note).font(.caption).foregroundStyle(.secondary)
-                            Text(d.path).font(.caption2).foregroundStyle(.tertiary)
-                                .lineLimit(1).truncationMode(.middle)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-    }
-
     private func export(_ format: Exporter.Format, days: Int?) {
         let data = state.exportData(format: format, days: days)
         let panel = NSSavePanel()
@@ -405,76 +402,6 @@ struct MainWindow: View {
         panel.nameFieldStringValue = "tokenmeter-\(date).\(format.fileExtension)"
         if panel.runModal() == .OK, let url = panel.url {
             try? data.write(to: url)
-        }
-    }
-}
-
-struct KeyRow: View {
-    let label: String
-    let account: String
-    let placeholder: String
-    let provider: Provider
-    @ObservedObject var state: AppState
-    @State private var value: String = ""
-    @State private var saved: Bool = false
-    @State private var testing: Bool = false
-    @State private var testResult: String? = nil
-    @State private var testOK: Bool = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text(label).frame(width: 180, alignment: .leading)
-                SecureField(placeholder, text: $value)
-                    .textFieldStyle(.roundedBorder)
-                Button(saved ? "Saved" : "Save") {
-                    Keychain.set(value.isEmpty ? nil : value, for: account)
-                    saved = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { saved = false }
-                }
-                .disabled(value.isEmpty)
-                Button {
-                    Task { await runTest() }
-                } label: {
-                    if testing { ProgressView().controlSize(.small) }
-                    else { Text("Test") }
-                }
-                Button(role: .destructive) {
-                    Keychain.set(nil, for: account)
-                    value = ""
-                    testResult = nil
-                } label: { Image(systemName: "trash") }
-            }
-            if let msg = testResult {
-                HStack(spacing: 4) {
-                    Image(systemName: testOK ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(testOK ? .green : .red)
-                    Text(msg).font(.caption).foregroundStyle(testOK ? .green : .red)
-                }
-                .padding(.leading, 188)
-            }
-        }
-        .onAppear {
-            if let existing = Keychain.get(account), !existing.isEmpty {
-                value = String(repeating: "•", count: 8) + String(existing.suffix(4))
-            }
-        }
-    }
-
-    @MainActor
-    private func runTest() async {
-        testing = true; defer { testing = false }
-        let r = await state.testProvider(provider)
-        if let r {
-            testOK = true
-            testResult = r.detail
-        } else {
-            testOK = false
-            if case let .error(msg, _) = state.providerStatuses[provider] ?? .idle {
-                testResult = msg
-            } else {
-                testResult = "Test failed"
-            }
         }
     }
 }

@@ -16,6 +16,7 @@ final class AppState: ObservableObject {
     /// by an API; this is a user-tunable target so the UI can show "of budget".
     @AppStorage("sessionTokenBudget") var sessionTokenBudget: Int = 10_000_000
     @AppStorage("weeklyTokenBudget") var weeklyTokenBudget: Int = 50_000_000
+    @AppStorage("sessionMessageBudget") var sessionMessageBudget: Int = 50
     @AppStorage("notificationsEnabled") var notificationsEnabled: Bool = true
 
     private var indexById: [String: Int] = [:]
@@ -123,6 +124,9 @@ final class AppState: ObservableObject {
             persist()
             if notificationsEnabled, let s = activeSession {
                 notifier.evaluate(session: s, budget: sessionTokenBudget)
+                notifier.evaluateBurnRate(
+                    session: s,
+                    baselineTokensPerHour: baselineTokensPerHour())
             }
         }
     }
@@ -227,6 +231,69 @@ final class AppState: ObservableObject {
             fetch  += r.webFetchRequests ?? 0
         }
         return (search, fetch)
+    }
+
+    // MARK: - Burn-rate baseline
+
+    /// Tokens-per-hour averaged over completed sessions in the last 7 days.
+    /// Used as the comparison baseline for the burn-rate alert.
+    func baselineTokensPerHour() -> Double {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? .distantPast
+        let completed = sessions.filter { !$0.isActive && $0.startedAt >= cutoff }
+        guard !completed.isEmpty else { return 0 }
+        let totals = completed.map { Double($0.totals.totalTokens) }.reduce(0, +)
+        let hours = completed.map { $0.endsAt.timeIntervalSince($0.startedAt) / 3600 }
+            .reduce(0, +)
+        guard hours > 0 else { return 0 }
+        return totals / hours
+    }
+
+    // MARK: - Model efficiency analysis
+
+    struct EfficiencyAnalysis: Sendable {
+        let totalOpusMessages: Int
+        let sonnetCandidateCount: Int       // Opus msgs likely solvable by Sonnet
+        let estimatedSavingsUSD: Double      // if those msgs had run on Sonnet
+        let windowDays: Int
+    }
+
+    /// Heuristic: an Opus message is "Sonnet-candidate" when its prompt is
+    /// short and the response is short — i.e. simple Q&A or small edits that
+    /// don't need Opus's reasoning depth.
+    ///
+    /// Thresholds reflect typical Claude Code routine work; they're not exact.
+    /// The card surfaces the analysis transparently so users decide.
+    func modelEfficiency(days: Int = 7) -> EfficiencyAnalysis {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? .distantPast
+        let opus = records.filter {
+            $0.timestamp >= cutoff
+                && $0.provider == .claudeCode
+                && $0.model.lowercased().contains("opus")
+        }
+        // "Short" = roughly under a single page of input/output
+        let shortInputCap = 20_000     // total input incl. cache reads
+        let shortOutputCap = 1_500
+        let candidates = opus.filter {
+            $0.totalInputTokens <= shortInputCap && $0.outputTokens <= shortOutputCap
+        }
+        // Savings: difference between Opus cost and Sonnet cost on identical token counts.
+        let sonnet = ModelCatalog.match("claude-sonnet-4-6")
+        var savings: Double = 0
+        for r in candidates {
+            let opusCost = r.costUSD ?? 0
+            let sonnetCost = sonnet?.costUSD(
+                input: r.inputTokens,
+                cacheWrite: r.cacheCreationTokens,
+                cacheRead: r.cacheReadTokens,
+                output: r.outputTokens) ?? 0
+            savings += max(0, opusCost - sonnetCost)
+        }
+        return EfficiencyAnalysis(
+            totalOpusMessages: opus.count,
+            sonnetCandidateCount: candidates.count,
+            estimatedSavingsUSD: savings,
+            windowDays: days
+        )
     }
 
     // MARK: - Export

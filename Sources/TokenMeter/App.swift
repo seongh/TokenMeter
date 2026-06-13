@@ -2,10 +2,12 @@ import SwiftUI
 
 @main
 struct TokenMeterApp: App {
+    // Focus is local-only — Claude Code logs. Admin-API adapters are kept in
+    // the codebase (Anthropic/OpenAI) for future use but are not wired into
+    // the default scene because admin API keys are uncommon and the Console
+    // already shows the same numbers.
     @StateObject private var state = AppState(providers: [
-        ClaudeCodeProvider(),
-        AnthropicAPIProvider(),
-        OpenAIAPIProvider()
+        ClaudeCodeProvider()
     ])
 
     var body: some Scene {
