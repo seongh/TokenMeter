@@ -65,6 +65,19 @@ cp Info.plist "$APP/Contents/Info.plist"
 cp "$ICON_ICNS" "$APP/Contents/Resources/AppIcon.icns"
 chmod +x "$APP/Contents/MacOS/TokenMeter"
 
+# ---------- 3b. Localizations ----------
+# SwiftUI Text("key") and NSLocalizedString look up via Bundle.main, but SPM
+# packages the .strings inside a nested resource bundle. Copy the .lproj
+# folders to the .app's main Resources so the lookups resolve.
+SPM_BUNDLE_NAME="TokenMeter_TokenMeter.bundle"
+SPM_BUNDLE_PATH="$BIN_DIR/$SPM_BUNDLE_NAME"
+if [[ -d "$SPM_BUNDLE_PATH" ]]; then
+    for lproj in "$SPM_BUNDLE_PATH"/*.lproj; do
+        [[ -d "$lproj" ]] || continue
+        cp -R "$lproj" "$APP/Contents/Resources/"
+    done
+fi
+
 # ---------- 4. Ad-hoc code sign ----------
 # Real notarization needs a Developer ID + Apple ID + app-specific password.
 # Ad-hoc signing (identity "-") gives the bundle a stable signature and lets
