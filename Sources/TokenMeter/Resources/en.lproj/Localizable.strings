@@ -17,13 +17,14 @@
 "no_data_yet" = "No data yet";
 "current_model" = "Current model";
 
-/* Status levels */
+/* Status levels — wording stays honest:
+   the bar is the user's self-set budget, not Anthropic's real cap. */
 "status_relaxed_title" = "Plenty of room";
 "status_relaxed_body" = "Today's pace is normal.";
 "status_watch_title" = "Watch your pace";
 "status_watch_body" = "You're burning faster than usual.";
-"status_critical_title" = "Close to the limit";
-"status_critical_body" = "Wrap up before the session resets.";
+"status_critical_title" = "Near your budget";
+"status_critical_body" = "This is your own session budget — Anthropic's actual cap is not public.";
 "status_idle_title" = "No active session";
 "status_idle_body" = "Open Claude Code to start tracking.";
 
