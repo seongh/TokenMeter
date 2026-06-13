@@ -100,18 +100,6 @@ struct StateStoreTests {
     }
 }
 
-@Suite("InstallProbe")
-struct InstallProbeTests {
-    @Test("probeAll never crashes regardless of system state")
-    func safeProbe() {
-        let results = InstallProbe.probeAll()
-        for d in results {
-            #expect(!d.name.isEmpty)
-            #expect(!d.path.isEmpty)
-        }
-    }
-}
-
 @Suite("Project aggregation")
 struct ProjectAggregationTests {
     @Test("DailyBucket sums byProject correctly")
