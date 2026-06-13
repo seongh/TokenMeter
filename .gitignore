@@ -1,0 +1,20 @@
+.DS_Store
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/
+.netrc
+Package.resolved
+
+# Generated build artifacts
+TokenMeter.app/
+Assets/AppIcon.icns
+
+# Xcode user data
+*.xcuserstate
+*.xcodeproj/
+
+# Local secrets / state
+*.local
+secrets/
