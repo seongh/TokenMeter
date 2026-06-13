@@ -10,9 +10,9 @@ struct MenuBarLabel: View {
                 MenuBarProgressBar(progress: pct(s), tint: state.status.tint)
                     .frame(width: 44, height: 7)
                 Text(String.localizedStringWithFormat(
-                    NSLocalizedString("menubar_budget_pct", comment: ""),
-                    Int(pct(s) * 100)))
-                    .font(.system(size: 11, weight: .medium).monospacedDigit())
+                    NSLocalizedString("menubar_session_tokens", comment: ""),
+                    Format.tokens(s.totals.totalTokens)))
+                    .font(.system(size: 12, weight: .medium).monospacedDigit())
             }
         } else {
             // No active session — fall back to today's volume as a book count.

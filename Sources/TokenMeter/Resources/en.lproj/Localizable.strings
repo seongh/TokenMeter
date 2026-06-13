@@ -125,6 +125,7 @@
 "menubar_today_tokens" = "Today %@ tok";
 "menubar_today_books" = "Today ≈ %lld books";
 "menubar_budget_pct" = "budget %lld%%";
+"menubar_session_tokens" = "%@ tokens";
 "tokens_hint" = "1 token ≈ ¾ of an English word";
 
 /* Format units */
