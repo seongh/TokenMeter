@@ -2,25 +2,32 @@ import SwiftUI
 
 struct MenuBarLabel: View {
     @ObservedObject var state: AppState
+
     var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: iconName)
-            Text(labelText)
-                .monospacedDigit()
-                .font(.system(size: 12, weight: .medium))
+        if let s = state.activeSession {
+            HStack(spacing: 5) {
+                Image(systemName: "gauge.with.dots.needle.50percent")
+                MenuBarProgressBar(progress: pct(s), tint: state.status.tint)
+                    .frame(width: 52, height: 7)
+                Text("\(Int(pct(s) * 100))%")
+                    .font(.system(size: 11, weight: .medium).monospacedDigit())
+            }
+        } else {
+            // No active session — fall back to today's volume as a book count.
+            HStack(spacing: 4) {
+                Image(systemName: "gauge.with.dots.needle.0percent")
+                Text(idleLabel)
+                    .monospacedDigit()
+                    .font(.system(size: 12, weight: .medium))
+            }
         }
     }
 
-    /// Active session: "1시간 50분 남음" / "1h 50m left".
-    /// No session: "오늘 ≈ 책 1,100권" / "Today ≈ 1100 books".
-    /// The icon's color already encodes the burn level, so the label is just
-    /// the single piece of information you need to decide whether to act.
-    private var labelText: String {
-        if let s = state.activeSession {
-            return String.localizedStringWithFormat(
-                NSLocalizedString("menubar_time_left", comment: ""),
-                Format.clockShort(s.remaining))
-        }
+    private func pct(_ s: SessionBlock) -> Double {
+        min(1.0, Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget)))
+    }
+
+    private var idleLabel: String {
         let tokens = state.todayBucket?.totals.totalTokens ?? 0
         if tokens >= 100_000 {
             let books = tokens / 100_000
@@ -31,14 +38,22 @@ struct MenuBarLabel: View {
             NSLocalizedString("menubar_today_tokens", comment: ""),
             Format.tokens(tokens))
     }
+}
 
-    private var iconName: String {
-        guard let s = state.activeSession else { return "gauge.with.dots.needle.0percent" }
-        let pct = Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget))
-        if pct >= 0.95 { return "gauge.with.dots.needle.100percent" }
-        if pct >= 0.66 { return "gauge.with.dots.needle.67percent" }
-        if pct >= 0.33 { return "gauge.with.dots.needle.50percent" }
-        return "gauge.with.dots.needle.33percent"
+/// Compact pill-shaped progress bar sized to fit on the system menu bar.
+struct MenuBarProgressBar: View {
+    let progress: Double
+    let tint: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.secondary.opacity(0.25))
+                Capsule()
+                    .fill(tint)
+                    .frame(width: max(2, geo.size.width * progress))
+            }
+        }
     }
 }
 
