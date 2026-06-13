@@ -16,16 +16,30 @@
 "no_data_yet" = "No data yet";
 "current_model" = "Current model";
 
-/* Status levels — wording stays honest:
-   the bar is the user's self-set budget, not Anthropic's real cap. */
+/* Status — wording is chosen by *cause* (budget vs burn rate)
+   so the message never lies. The bar is the user's self-set budget,
+   not Anthropic's real cap. */
 "status_relaxed_title" = "Plenty of room";
 "status_relaxed_body" = "Today's pace is normal.";
-"status_watch_title" = "Watch your pace";
-"status_watch_body" = "You're burning faster than usual.";
+
+"status_watch_budget_title" = "Past the halfway mark";
+"status_watch_budget_body" = "You've used more than half of your own session budget.";
+
+"status_watch_burn_title" = "Faster than usual";
+"status_watch_burn_body" = "Your pace is above baseline, but the budget still has room.";
+
 "status_critical_title" = "Near your budget";
 "status_critical_body" = "This is your own session budget — Anthropic's actual cap is not public.";
+
+"status_burn_critical_title" = "Burning very fast";
+"status_burn_critical_body" = "Your pace is 2× the usual baseline. Budget headroom remains, but you'll reach it soon.";
+
 "status_idle_title" = "No active session";
 "status_idle_body" = "Open Claude Code to start tracking.";
+
+/* Day-over-day */
+"yesterday" = "Yesterday";
+"yesterday_was" = "Yesterday %@ tok";
 
 /* Hero card */
 "session_remaining" = "%@ until session reset";

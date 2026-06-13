@@ -6,7 +6,8 @@ struct HeroCard: View {
     @ObservedObject var state: AppState
 
     var body: some View {
-        let level = state.status
+        let status = state.statusDetail
+        let level = status.level
         let session = state.activeSession
         let used = session?.totals.totalTokens ?? state.todayBucket?.totals.totalTokens ?? 0
         let budget = max(1, state.sessionTokenBudget)
@@ -15,13 +16,13 @@ struct HeroCard: View {
         return VStack(alignment: .leading, spacing: 14) {
             // Status headline
             HStack(alignment: .center, spacing: 14) {
-                Image(systemName: level.symbol)
+                Image(systemName: status.symbol)
                     .font(.system(size: 36, weight: .semibold))
                     .foregroundStyle(level.tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(level.titleKey)
+                    Text(status.titleKey)
                         .font(.system(size: 26, weight: .bold))
-                    Text(level.bodyKey)
+                    Text(status.bodyKey)
                         .font(.body)
                         .foregroundStyle(.secondary)
                 }

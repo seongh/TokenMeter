@@ -111,16 +111,17 @@ struct MenuBarContent: View {
     }
 
     private var statusSection: some View {
-        let level = state.status
+        let status = state.statusDetail
+        let level = status.level
         let session = state.activeSession
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: level.symbol)
+                Image(systemName: status.symbol)
                     .font(.title2).foregroundStyle(level.tint)
                     .frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(level.titleKey).font(.system(size: 15, weight: .semibold))
-                    Text(level.bodyKey)
+                    Text(status.titleKey).font(.system(size: 15, weight: .semibold))
+                    Text(status.bodyKey)
                         .font(.caption).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -183,6 +184,7 @@ struct MenuBarContent: View {
 
     private var todaySection: some View {
         let t = state.todayBucket?.totals ?? .init()
+        let yesterday = state.yesterdayBucket?.totals
         return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Label("today", systemImage: "sun.max.fill")
@@ -201,6 +203,12 @@ struct MenuBarContent: View {
             }
             if let hint = Format.humanizedTokens(t.totalTokens) {
                 Text(hint).font(.caption2).foregroundStyle(.tertiary)
+            }
+            if let y = yesterday, y.totalTokens > 0 {
+                Text(String.localizedStringWithFormat(
+                    NSLocalizedString("yesterday_was", comment: ""),
+                    Format.tokens(y.totalTokens)))
+                    .font(.caption2).foregroundStyle(.tertiary)
             }
         }
         .padding(.horizontal, 12).padding(.vertical, 8)

@@ -275,11 +275,22 @@ final class AppState: ObservableObject {
         return rate / baseline
     }
 
-    /// One status level the whole UI agrees on.
-    var status: StatusLevel {
+    /// Full status detail including title/body chosen by *cause*.
+    var statusDetail: UsageStatus {
         guard let s = activeSession else { return .idle }
         let pct = Double(s.totals.totalTokens) / Double(max(1, sessionTokenBudget))
-        return StatusLevel.from(percentage: pct, baselineRatio: currentBurnRatio())
+        return UsageStatus.decide(percentage: pct, baselineRatio: currentBurnRatio())
+    }
+
+    /// One status level the whole UI agrees on.
+    var status: StatusLevel { statusDetail.level }
+
+    /// Yesterday's daily totals (local calendar).
+    var yesterdayBucket: DailyBucket? {
+        let cal = Calendar.current
+        guard let yesterday = cal.date(byAdding: .day, value: -1, to: cal.startOfDay(for: Date()))
+        else { return nil }
+        return Aggregator.dailies(records).first { $0.date == yesterday }
     }
 
     // MARK: - Burn-rate baseline

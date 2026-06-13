@@ -1,13 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Unified status level used across the UI so colors and copy stay consistent.
-///
-/// Mapping:
-///   relaxed (< 66%)  — green, "Plenty of room"
-///   watch   (66-85%) — orange, "Watch your pace"
-///   critical (≥ 85%) — red, "Close to the limit"
-///   idle             — gray, "No active session"
+/// Severity color used across the UI.
 enum StatusLevel: Sendable, Equatable {
     case relaxed
     case watch
@@ -22,45 +16,67 @@ enum StatusLevel: Sendable, Equatable {
         case .idle:     return Color.gray
         }
     }
+}
 
-    var symbol: String {
-        switch self {
-        case .relaxed:  return "checkmark.circle.fill"
-        case .watch:    return "exclamationmark.circle.fill"
-        case .critical: return "exclamationmark.triangle.fill"
-        case .idle:     return "moon.zzz.fill"
-        }
+/// What the headline actually means in this moment. Carries both the color
+/// severity and the title/body string keys, so the UI never says "예산 거의
+/// 다 썼어요" when the real reason is a fast burn rate.
+struct UsageStatus: Equatable {
+    let level: StatusLevel
+    let symbol: String
+    let titleKey: LocalizedStringKey
+    let bodyKey: LocalizedStringKey
+    let titleKeyRaw: String
+    let bodyKeyRaw: String
+
+    private init(
+        _ level: StatusLevel, _ symbol: String,
+        _ title: String, _ body: String
+    ) {
+        self.level = level
+        self.symbol = symbol
+        self.titleKey = LocalizedStringKey(title)
+        self.bodyKey = LocalizedStringKey(body)
+        self.titleKeyRaw = title
+        self.bodyKeyRaw = body
     }
 
-    var titleKey: LocalizedStringKey {
-        switch self {
-        case .relaxed:  return "status_relaxed_title"
-        case .watch:    return "status_watch_title"
-        case .critical: return "status_critical_title"
-        case .idle:     return "status_idle_title"
-        }
+    static var idle: UsageStatus {
+        .init(.idle, "moon.zzz.fill",
+              "status_idle_title", "status_idle_body")
+    }
+    static var relaxed: UsageStatus {
+        .init(.relaxed, "checkmark.circle.fill",
+              "status_relaxed_title", "status_relaxed_body")
+    }
+    static var watchBudget: UsageStatus {
+        .init(.watch, "exclamationmark.circle.fill",
+              "status_watch_budget_title", "status_watch_budget_body")
+    }
+    static var watchBurn: UsageStatus {
+        .init(.watch, "exclamationmark.circle.fill",
+              "status_watch_burn_title", "status_watch_burn_body")
+    }
+    static var criticalBudget: UsageStatus {
+        .init(.critical, "exclamationmark.triangle.fill",
+              "status_critical_title", "status_critical_body")
+    }
+    static var criticalBurn: UsageStatus {
+        .init(.critical, "flame.fill",
+              "status_burn_critical_title", "status_burn_critical_body")
     }
 
-    var bodyKey: LocalizedStringKey {
-        switch self {
-        case .relaxed:  return "status_relaxed_body"
-        case .watch:    return "status_watch_body"
-        case .critical: return "status_critical_body"
-        case .idle:     return "status_idle_body"
-        }
-    }
-
-    /// Classify a progress percentage (0…1) into a status level.
-    static func from(percentage: Double, baselineRatio: Double? = nil) -> StatusLevel {
-        // Treat both budget % and burn-rate ratio as signals. The worse of
-        // the two wins.
-        var level: StatusLevel = percentage >= 0.85 ? .critical
-                              : percentage >= 0.66 ? .watch
-                              : .relaxed
+    /// Decide a status from the active session's budget % and the
+    /// burn-rate ratio. Budget always wins when it's high — that's the
+    /// concrete, actionable signal. Burn rate raises severity only when
+    /// budget is otherwise calm.
+    static func decide(percentage: Double, baselineRatio: Double?) -> UsageStatus {
+        if percentage >= 0.85 { return .criticalBudget }
+        if percentage >= 0.66 { return .watchBudget }
         if let r = baselineRatio {
-            if r >= 1.5 && level == .relaxed { level = .watch }
-            if r >= 2.0 { level = .critical }
+            if r >= 2.0 { return .criticalBurn }
+            if r >= 1.5 { return .watchBurn }
         }
-        return level
+        return .relaxed
     }
 }
