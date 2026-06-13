@@ -11,12 +11,25 @@ struct MenuBarLabel: View {
         }
     }
 
-    /// Active session: "1h 42m · 4.5M" / "1시간 42분 · 450만".
+    /// Active session: "1시간 50분 남음" / "1h 50m left".
+    /// No session: "오늘 ≈ 책 1,100권" / "Today ≈ 1100 books".
+    /// The icon's color already encodes the burn level, so the label is just
+    /// the single piece of information you need to decide whether to act.
     private var labelText: String {
         if let s = state.activeSession {
-            return "\(Format.clockShort(s.remaining)) · \(Format.tokens(s.totals.totalTokens))"
+            return String.localizedStringWithFormat(
+                NSLocalizedString("menubar_time_left", comment: ""),
+                Format.clockShort(s.remaining))
         }
-        return Format.tokens(state.todayBucket?.totals.totalTokens ?? 0)
+        let tokens = state.todayBucket?.totals.totalTokens ?? 0
+        if tokens >= 100_000 {
+            let books = tokens / 100_000
+            return String.localizedStringWithFormat(
+                NSLocalizedString("menubar_today_books", comment: ""), books)
+        }
+        return String.localizedStringWithFormat(
+            NSLocalizedString("menubar_today_tokens", comment: ""),
+            Format.tokens(tokens))
     }
 
     private var iconName: String {

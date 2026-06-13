@@ -119,6 +119,11 @@
 /* Human-friendly comparisons */
 "humanized_books" = "≈ %lld books of text";
 "humanized_pages" = "≈ %lld pages";
+
+/* Menu bar label */
+"menubar_time_left" = "%@ left";
+"menubar_today_tokens" = "Today %@ tok";
+"menubar_today_books" = "Today ≈ %lld books";
 "tokens_hint" = "1 token ≈ ¾ of an English word";
 
 /* Format units */

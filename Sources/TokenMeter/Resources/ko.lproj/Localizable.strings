@@ -119,6 +119,11 @@
 /* Human-friendly comparisons */
 "humanized_books" = "≈ 책 %lld권 분량";
 "humanized_pages" = "≈ %lld페이지 분량";
+
+/* Menu bar label */
+"menubar_time_left" = "%@ 남음";
+"menubar_today_tokens" = "오늘 %@ 토큰";
+"menubar_today_books" = "오늘 ≈ 책 %lld권";
 "tokens_hint" = "토큰 1개 ≈ 한국어 1~2글자";
 
 /* Format units */
