@@ -6,12 +6,12 @@ import Foundation
 final class ClaudeCodeProvider: UsageProvider, @unchecked Sendable {
     let provider: Provider = .claudeCode
 
-    private let root: URL
+    private var root: URL?                        // nil = no folder granted yet
     private let lock = NSLock()
     private var fileOffsets: [URL: UInt64] = [:]    // resume parsing from here
     private var seen: Set<String> = []              // dedupe by message uuid
 
-    init(root: URL = FileManager.default
+    init(root: URL? = FileManager.default
             .homeDirectoryForCurrentUser
             .appendingPathComponent(".claude/projects"),
          initialOffsets: [String: UInt64] = [:],
@@ -21,6 +21,12 @@ final class ClaudeCodeProvider: UsageProvider, @unchecked Sendable {
             fileOffsets[URL(fileURLWithPath: path)] = off
         }
         self.seen = seenIDs
+    }
+
+    /// Swap the root folder at runtime — used after the user grants access in
+    /// the sandboxed build via NSOpenPanel.
+    func updateRoot(_ url: URL?) {
+        withLock { self.root = url }
     }
 
     /// Current per-file byte offsets, keyed by absolute path. Used by the cache layer.
@@ -33,6 +39,11 @@ final class ClaudeCodeProvider: UsageProvider, @unchecked Sendable {
     }
 
     func testConnection() async throws -> TestResult {
+        guard let root = withLock({ self.root }) else {
+            return TestResult(
+                recordsReachable: 0,
+                detail: "No Claude logs folder granted (sandbox: needs user permission).")
+        }
         let files = (try? Self.discoverJSONL(under: root)) ?? []
         return TestResult(
             recordsReachable: files.count,
@@ -53,8 +64,9 @@ final class ClaudeCodeProvider: UsageProvider, @unchecked Sendable {
     }
 
     func snapshot() async throws -> [UsageRecord] {
-        try await Task.detached(priority: .utility) { [self] in
-            let files = try Self.discoverJSONL(under: self.root)
+        guard let root = withLock({ self.root }) else { return [] }
+        return try await Task.detached(priority: .utility) { [self] in
+            let files = try Self.discoverJSONL(under: root)
             var all: [UsageRecord] = []
             for file in files {
                 let from = self.withLock { self.fileOffsets[file] ?? 0 }
@@ -66,7 +78,10 @@ final class ClaudeCodeProvider: UsageProvider, @unchecked Sendable {
 
     func live() -> AsyncStream<[UsageRecord]> {
         AsyncStream { continuation in
-            let watcher = ClaudeCodeWatcher(root: self.root) { [weak self] changed in
+            guard let root = self.withLock({ self.root }) else {
+                continuation.finish(); return
+            }
+            let watcher = ClaudeCodeWatcher(root: root) { [weak self] changed in
                 guard let self else { return }
                 var delta: [UsageRecord] = []
                 for url in changed {

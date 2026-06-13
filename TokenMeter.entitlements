@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Mac App Store requires sandboxing. -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- Outgoing HTTPS to api.anthropic.com / api.openai.com. -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- User explicitly grants access to a folder (the Claude logs dir) via
+         an Open panel. We persist the choice as a security-scoped bookmark. -->
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+
+    <!-- Allow bookmarks created from the open panel to keep working
+         across launches. -->
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+</dict>
+</plist>

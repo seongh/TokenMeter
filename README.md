@@ -112,6 +112,39 @@ All settings live in the dashboard (open via the menu bar drop-down → **Open d
 - Cache location: `~/Library/Application Support/TokenMeter/state.json`.
 - Keychain service id: `com.seongho.tokenmeter`.
 
+## Mac App Store submission
+
+The codebase is set up for sandboxed distribution. The build script signs with `TokenMeter.entitlements` (App Sandbox + network client + user-selected read-only files + app-scope bookmarks), and the runtime asks the user via `NSOpenPanel` for read access to the Claude logs folder, persisting the choice as a security-scoped bookmark.
+
+What's already done in code:
+- `TokenMeter.entitlements` — sandbox, network.client, files.user-selected.read-only, files.bookmarks.app-scope.
+- `ClaudeFolderAccess.swift` — detects sandbox via `NSHomeDirectory()`, presents an open panel, stores the bookmark.
+- `MainWindow.folderAccessCardIfNeeded` — first-run UI when no bookmark is saved.
+- Build script signs with `--entitlements TokenMeter.entitlements -o runtime`.
+
+What you must still do (paid / account-bound, can't be automated here):
+
+1. **Enroll in the Apple Developer Program** ($99/year) at developer.apple.com.
+2. **Reserve the bundle identifier** `com.seongho.tokenmeter` in App Store Connect, or change `CFBundleIdentifier` in `Info.plist` if you'd prefer a different id.
+3. **Create signing assets** in your Apple Developer account:
+   - A *Mac App Distribution* certificate (for the .app binary).
+   - A *Mac Installer Distribution* certificate (for the .pkg upload).
+   - A provisioning profile tied to the bundle id.
+4. **Replace ad-hoc signing** in `Scripts/build-app.sh`: change `--sign -` to `--sign "3rd Party Mac Developer Application: Your Name (TEAMID)"`.
+5. **Produce the installer**:
+   ```bash
+   productbuild --component TokenMeter.app /Applications \
+       --sign "3rd Party Mac Developer Installer: Your Name (TEAMID)" \
+       TokenMeter.pkg
+   ```
+6. **Upload via Transporter** (or `xcrun altool --upload-app`) to App Store Connect.
+7. **Fill in App Store Connect metadata**: app description, screenshots, category (already declared as `developer-tools`), privacy nutrition labels (we collect zero analytics; only outbound traffic is to api.anthropic.com / api.openai.com when the user enters their own admin key), and review notes explaining the folder-access flow.
+8. **Submit for review**. Typical wait: 1–3 days.
+
+Notes that may come up in review:
+- Apple sometimes pushes back on menu-bar-only apps (`LSUIElement = true`). If review flags it, add a "preferences window" entry-point — we already have the dashboard Window, so this is a metadata explanation rather than a code change.
+- We never read the Cursor / Windsurf private SQLite DBs; the `InstallProbe` only detects directory existence. Mention this in review notes if reviewers ask about third-party tool detection.
+
 ## License
 
 MIT.

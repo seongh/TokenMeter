@@ -1,14 +1,26 @@
 #!/usr/bin/env bash
 # Build TokenMeter as a proper .app bundle the user can double-click.
-# Embeds AppIcon.icns and applies ad-hoc code signing so macOS treats the
-# bundle as a real signed app (no Gatekeeper warning on first launch from
-# the same machine; real notarization still needs a Developer ID).
+# Embeds AppIcon.icns + entitlements (App Sandbox, network.client,
+# user-selected file read-only) and applies ad-hoc code signing.
+#
+# Flags:
+#   --debug           build the debug Swift configuration
+#   --no-sandbox      omit entitlements (purely local builds without sandbox)
+#
+# Real notarization still needs an Apple Developer ID — out of scope for
+# this script. See the README "App Store" section.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 CONFIG="release"
-[[ "${1-}" == "--debug" ]] && CONFIG="debug"
+SANDBOX=1
+for arg in "$@"; do
+    case "$arg" in
+        --debug)      CONFIG="debug" ;;
+        --no-sandbox) SANDBOX=0 ;;
+    esac
+done
 
 # ---------- 1. Swift build ----------
 echo "▸ swift build ($CONFIG)"
@@ -57,9 +69,14 @@ chmod +x "$APP/Contents/MacOS/TokenMeter"
 # Real notarization needs a Developer ID + Apple ID + app-specific password.
 # Ad-hoc signing (identity "-") gives the bundle a stable signature and lets
 # Launch Services trust it across relaunches on this machine.
-echo "▸ ad-hoc code signing"
-codesign --force --deep --sign - "$APP" 2>&1 | grep -v "replacing existing signature" || true
+echo "▸ ad-hoc code signing (sandbox=$SANDBOX)"
+SIGN_ARGS=(--force --deep --sign -)
+if [[ "$SANDBOX" == "1" ]]; then
+    SIGN_ARGS+=(--entitlements TokenMeter.entitlements -o runtime)
+fi
+codesign "${SIGN_ARGS[@]}" "$APP" 2>&1 | grep -v "replacing existing signature" || true
 codesign --verify --verbose=2 "$APP" 2>&1 | tail -3
+codesign -d --entitlements - "$APP" 2>&1 | grep -i "app-sandbox" || true
 
 echo "✓ built $APP"
 echo "   open with: open $APP"

@@ -23,6 +23,7 @@ struct MainWindow: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    folderAccessCardIfNeeded
                     summaryCards
                     chartCard
                     mcpCard
@@ -157,6 +158,31 @@ struct MainWindow: View {
         }
         .padding(16)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private var folderAccessCardIfNeeded: some View {
+        if case .needsGrant = state.folderAccess.state {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.title2).foregroundStyle(.orange)
+                    Text("Grant access to your Claude logs folder")
+                        .font(.headline)
+                }
+                Text("TokenMeter is running inside the macOS App Sandbox and cannot read **~/.claude/projects** until you explicitly allow it. The permission is read-only and persists across launches.")
+                    .font(.callout).foregroundStyle(.secondary)
+                Button {
+                    Task { await state.requestClaudeFolderAccess() }
+                } label: {
+                    Label("Choose Claude folder…", systemImage: "folder.badge.plus")
+                }
+                .controlSize(.large)
+            }
+            .padding(16)
+            .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.5)))
+        }
     }
 
     private var mcpCard: some View {

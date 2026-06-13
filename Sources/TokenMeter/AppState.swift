@@ -24,15 +24,32 @@ final class AppState: ObservableObject {
     private let store: StateStore
     private let notifier: SessionNotifier
     private weak var claudeCode: ClaudeCodeProvider?
+    let folderAccess: ClaudeFolderAccess
 
     init(providers: [any UsageProvider],
          store: StateStore = .init(),
-         notifier: SessionNotifier = .init()) {
+         notifier: SessionNotifier = .init(),
+         folderAccess: ClaudeFolderAccess = .init()) {
         self.providers = providers
         self.store = store
         self.notifier = notifier
-        self.claudeCode = providers.compactMap { $0 as? ClaudeCodeProvider }.first
+        self.folderAccess = folderAccess
+        let cc = providers.compactMap { $0 as? ClaudeCodeProvider }.first
+        self.claudeCode = cc
+        // Seed the provider's root from whichever URL the access layer
+        // resolved (direct path outside sandbox, bookmark inside sandbox).
+        cc?.updateRoot(folderAccess.rootURL)
         Task { await self.bootstrap() }
+    }
+
+    /// Prompt the user to grant the Claude folder via NSOpenPanel, then
+    /// rewire the provider and reload snapshots.
+    func requestClaudeFolderAccess() async {
+        folderAccess.requestAccess()
+        claudeCode?.updateRoot(folderAccess.rootURL)
+        // Re-bootstrap the Claude Code provider stream now that we have a root.
+        await loadSnapshots()
+        persist()
     }
 
     func bootstrap() async {
