@@ -34,14 +34,19 @@ final class ClaudeCodeWatcher: @unchecked Sendable {
         let contextInfo = Unmanaged.passUnretained(self).toOpaque()
         var ctx = FSEventStreamContext(
             version: 0, info: contextInfo, retain: nil, release: nil, copyDescription: nil)
+        // kFSEventStreamCreateFlagUseCFTypes makes the callback's `paths`
+        // argument a CFArrayRef of CFStringRefs (otherwise it's a raw `char**`
+        // which we'd corrupt by casting to CFArray — that bug crashed the
+        // app whenever an FSEvent actually fired).
         let flags: FSEventStreamCreateFlags =
             UInt32(kFSEventStreamCreateFlagFileEvents) |
-            UInt32(kFSEventStreamCreateFlagNoDefer)
+            UInt32(kFSEventStreamCreateFlagNoDefer) |
+            UInt32(kFSEventStreamCreateFlagUseCFTypes)
         let callback: FSEventStreamCallback = { _, info, count, paths, _, _ in
             guard let info else { return }
             let watcher = Unmanaged<ClaudeCodeWatcher>.fromOpaque(info).takeUnretainedValue()
-            let cfArr = unsafeBitCast(paths, to: CFArray.self)
-            let arr = (cfArr as? [String]) ?? []
+            let cfArray = Unmanaged<CFArray>.fromOpaque(paths).takeUnretainedValue()
+            let arr = (cfArray as? [String]) ?? []
             var jsonls: [URL] = []
             for s in arr where s.hasSuffix(".jsonl") {
                 jsonls.append(URL(fileURLWithPath: s))
