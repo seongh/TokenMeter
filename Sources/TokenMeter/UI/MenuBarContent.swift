@@ -7,13 +7,17 @@ struct MenuBarLabel: View {
         if let s = state.activeSession {
             HStack(spacing: 5) {
                 Image(systemName: "gauge.with.dots.needle.50percent")
-                MenuBarProgressBar(progress: pct(s), tint: state.status.tint)
-                    .frame(width: 44, height: 7)
+                MenuBarProgressBar(
+                    progress: pct(s),
+                    isOver: pctRaw(s) > 1.0,
+                    tint: state.status.tint)
+                    .frame(width: 64, height: 8)
                 Text(String.localizedStringWithFormat(
                     NSLocalizedString("menubar_session_tokens", comment: ""),
                     Format.tokens(s.totals.totalTokens)))
                     .font(.system(size: 12, weight: .medium).monospacedDigit())
                 trendArrow
+                overBudgetIndicator(pctRaw(s))
             }
         } else {
             // No active session — fall back to today's volume as a book count.
@@ -61,8 +65,11 @@ struct MenuBarLabel: View {
 }
 
 /// Compact pill-shaped progress bar sized to fit on the system menu bar.
+/// Switches to a deeper, more saturated red when the user has crossed their
+/// budget so 100%+ is unmistakable at a glance.
 struct MenuBarProgressBar: View {
-    let progress: Double
+    let progress: Double          // clamped 0...1
+    let isOver: Bool              // true when raw pct > 1.0
     let tint: Color
 
     var body: some View {
@@ -70,7 +77,7 @@ struct MenuBarProgressBar: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.25))
                 Capsule()
-                    .fill(tint)
+                    .fill(isOver ? Color(red: 0.75, green: 0.10, blue: 0.10) : tint)
                     .frame(width: max(2, geo.size.width * progress))
             }
         }
