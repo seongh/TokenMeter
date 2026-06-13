@@ -1,0 +1,125 @@
+/* Common */
+"app_name" = "TokenMeter";
+"tagline" = "Universal AI token tracker";
+"open_dashboard" = "Open dashboard";
+"quit" = "Quit";
+
+/* Menu bar panel */
+"today" = "Today";
+"this_week" = "This week";
+"last_n_days" = "Last %lld days";
+"active_session" = "Active 5h session";
+"ends_in" = "ends in %@";
+"no_active_session" = "No active session";
+"tokens" = "tokens";
+"messages" = "messages";
+"providers" = "Providers";
+"no_data_yet" = "No data yet";
+"current_model" = "Current model";
+
+/* Status levels */
+"status_relaxed_title" = "Plenty of room";
+"status_relaxed_body" = "Today's pace is normal.";
+"status_watch_title" = "Watch your pace";
+"status_watch_body" = "You're burning faster than usual.";
+"status_critical_title" = "Close to the limit";
+"status_critical_body" = "Wrap up before the session resets.";
+"status_idle_title" = "No active session";
+"status_idle_body" = "Open Claude Code to start tracking.";
+
+/* Hero card */
+"session_remaining" = "%@ until session reset";
+"session_remaining_label" = "until reset";
+"pace_faster" = "faster than usual";
+"pace_slower" = "slower than usual";
+"pace_normal" = "usual pace";
+"vs_baseline_faster" = "%.1f× faster than your 7-day average";
+"vs_baseline_slower" = "%.1f× slower than your 7-day average";
+"vs_baseline_normal" = "Matches your usual pace";
+
+/* Dashboard cards */
+"summary_today" = "Today";
+"summary_this_week" = "This week";
+"summary_active_session" = "Active session";
+"summary_current_model" = "Current model";
+"messages_tracked" = "%lld messages tracked";
+
+"efficiency_title" = "Model efficiency — last %lld days";
+"efficiency_opus_messages" = "Opus messages";
+"efficiency_sonnet_candidate" = "Sonnet-suitable";
+"efficiency_share" = "Share";
+"efficiency_empty" = "No Opus messages in this window — nothing to analyze.";
+"efficiency_explainer" = "Heuristic: an Opus message is flagged as Sonnet-suitable when its prompt and output were both small enough that Sonnet 4.6 would probably have produced an equivalent answer. The number on the right is your estimated saving if those messages had run on Sonnet. **A guess, not a recommendation** — Opus is genuinely better for complex reasoning.";
+
+"chart_title" = "Daily tokens — grouped by %@";
+"group_provider" = "Provider";
+"group_model" = "Model";
+"group_project" = "Project";
+"group_token_kind" = "Token kind";
+"range_week" = "Week";
+"range_two_weeks" = "2 Weeks";
+"range_month" = "Month";
+
+"mcp_title" = "MCP server-side tools — last %lld days";
+"mcp_web_search" = "Web search calls";
+"mcp_web_fetch" = "Web fetch calls";
+"mcp_empty" = "No server-side tool calls in this window.";
+
+"projects_title" = "Top projects — last %lld days";
+"projects_count_one" = "1 project";
+"projects_count_other" = "%lld projects";
+"projects_empty" = "No Claude Code projects tracked yet.";
+
+"top_messages_title" = "Top 10 most expensive messages — last %lld days";
+"top_messages_empty" = "Nothing in this window yet.";
+"col_when" = "When";
+"col_model" = "Model";
+"col_project" = "Project";
+"col_tokens" = "Tokens";
+"col_cost" = "Cost";
+"col_started" = "Started";
+"col_status" = "Status";
+
+"sessions_title" = "Recent 5h session blocks";
+"sessions_empty" = "No sessions tracked yet.";
+"session_active" = "active";
+"session_done" = "done";
+
+/* Settings */
+"settings_title" = "Budgets & Notifications";
+"settings_disclaimer" = "These don't reflect real plan limits (Anthropic doesn't expose them). They're targets so the bars stay meaningful.";
+"session_token_budget" = "Session token budget";
+"weekly_token_budget" = "Weekly token budget";
+"session_message_budget" = "Session message budget";
+"notify_thresholds" = "Notify at 80% / 95% of session budget";
+"launch_at_login" = "Launch TokenMeter at login";
+
+/* Folder access (sandbox) */
+"folder_grant_title" = "Grant access to your Claude logs folder";
+"folder_grant_body" = "TokenMeter is running inside the macOS App Sandbox and cannot read **~/.claude/projects** until you explicitly allow it. The permission is read-only and persists across launches.";
+"folder_grant_button" = "Choose Claude folder…";
+
+/* Export */
+"export" = "Export";
+"export_csv_visible" = "Export visible range as CSV";
+"export_json_visible" = "Export visible range as JSON";
+"export_csv_all" = "Export ALL records as CSV";
+"export_json_all" = "Export ALL records as JSON";
+
+/* Onboarding */
+"onboarding_welcome_title" = "Welcome to TokenMeter";
+"onboarding_welcome_body" = "A menu-bar app that shows how much you've used Claude — in real time, with no guesswork.";
+"onboarding_how_title" = "How it works";
+"onboarding_how_body" = "TokenMeter watches your local Claude Code logs and counts every token the model used. Your data never leaves your Mac.";
+"onboarding_limits_title" = "Honest limits";
+"onboarding_limits_body" = "Anthropic doesn't publish the exact Max plan limit, so the session bar uses a 5-hour window and a budget you set. We'll tell you when you're burning faster than usual.";
+"onboarding_next" = "Next";
+"onboarding_done" = "Get started";
+
+/* Format units */
+"time_hours_minutes" = "%lldh %lldm";
+"time_minutes_only" = "%lldm";
+"relative_just_now" = "just now";
+"relative_seconds" = "%lld sec ago";
+"relative_minutes" = "%lld min ago";
+"relative_hours" = "%lld h ago";

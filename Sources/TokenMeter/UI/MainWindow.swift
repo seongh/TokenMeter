@@ -10,13 +10,28 @@ struct MainWindow: View {
     @State private var groupBy: GroupBy = .provider
 
     enum Range: String, CaseIterable, Identifiable {
-        case week = "Week", twoWeeks = "2 Weeks", month = "Month"
+        case week, twoWeeks, month
         var id: String { rawValue }
         var days: Int { self == .week ? 7 : (self == .twoWeeks ? 14 : 30) }
+        var labelKey: LocalizedStringKey {
+            switch self {
+            case .week:     return "range_week"
+            case .twoWeeks: return "range_two_weeks"
+            case .month:    return "range_month"
+            }
+        }
     }
     enum GroupBy: String, CaseIterable, Identifiable {
-        case provider = "Provider", model = "Model", project = "Project", tokenKind = "Token kind"
+        case provider, model, project, tokenKind
         var id: String { rawValue }
+        var labelKey: LocalizedStringKey {
+            switch self {
+            case .provider:  return "group_provider"
+            case .model:     return "group_model"
+            case .project:   return "group_project"
+            case .tokenKind: return "group_token_kind"
+            }
+        }
     }
 
     var body: some View {
@@ -24,6 +39,7 @@ struct MainWindow: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     folderAccessCardIfNeeded
+                    HeroCard(state: state)
                     summaryCards
                     efficiencyCard
                     chartCard
@@ -37,59 +53,83 @@ struct MainWindow: View {
             }
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Picker("Range", selection: $range) {
-                        ForEach(Range.allCases) { Text($0.rawValue).tag($0) }
+                    Picker("range", selection: $range) {
+                        ForEach(Range.allCases) { Text($0.labelKey).tag($0) }
                     }.pickerStyle(.segmented).frame(width: 260)
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Picker("Group", selection: $groupBy) {
-                        ForEach(GroupBy.allCases) { Text($0.rawValue).tag($0) }
+                    Picker("group", selection: $groupBy) {
+                        ForEach(GroupBy.allCases) { Text($0.labelKey).tag($0) }
                     }.frame(width: 160)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button("Export visible range as CSV") { export(.csv, days: range.days) }
-                        Button("Export visible range as JSON") { export(.json, days: range.days) }
+                        Button("export_csv_visible") { export(.csv, days: range.days) }
+                        Button("export_json_visible") { export(.json, days: range.days) }
                         Divider()
-                        Button("Export ALL records as CSV") { export(.csv, days: nil) }
-                        Button("Export ALL records as JSON") { export(.json, days: nil) }
+                        Button("export_csv_all") { export(.csv, days: nil) }
+                        Button("export_json_all") { export(.json, days: nil) }
                     } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
+                        Label("export", systemImage: "square.and.arrow.up")
                     }
                 }
             }
-            .navigationTitle("TokenMeter")
+            .navigationTitle("app_name")
         }
-        .frame(minWidth: 820, minHeight: 600)
+        .frame(minWidth: 880, minHeight: 700)
     }
 
     // MARK: - Cards
+
+    @ViewBuilder
+    private var folderAccessCardIfNeeded: some View {
+        if case .needsGrant = state.folderAccess.state {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.title2).foregroundStyle(.orange)
+                    Text("folder_grant_title").font(.headline)
+                }
+                Text("folder_grant_body").font(.callout).foregroundStyle(.secondary)
+                Button {
+                    Task { await state.requestClaudeFolderAccess() }
+                } label: {
+                    Label("folder_grant_button", systemImage: "folder.badge.plus")
+                }
+                .controlSize(.large)
+            }
+            .padding(16)
+            .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.5)))
+        }
+    }
 
     private var summaryCards: some View {
         let day = state.todayBucket?.totals ?? .init()
         let week = state.weekTotals
         let active = state.activeSession?.totals.totalTokens ?? 0
         return HStack(spacing: 12) {
-            statCard(title: "Today",
+            statCard(titleKey: "summary_today",
                      value: Format.tokens(day.totalTokens),
                      sub: Format.usd(day.costUSD), color: .orange)
-            statCard(title: "This week",
+            statCard(titleKey: "summary_this_week",
                      value: Format.tokens(week.totalTokens),
                      sub: Format.usd(week.costUSD), color: .blue)
-            statCard(title: "Active session",
+            statCard(titleKey: "summary_active_session",
                      value: Format.tokens(active),
-                     sub: state.activeSession.map { "ends in " + Format.clockShort($0.remaining) } ?? "—",
+                     sub: state.activeSession.map { Format.clockShort($0.remaining) } ?? "—",
                      color: .green)
-            statCard(title: "Current model",
+            statCard(titleKey: "summary_current_model",
                      value: state.currentModel.map(ModelCatalog.displayName) ?? "—",
-                     sub: "\(state.records.count) messages tracked",
+                     sub: String.localizedStringWithFormat(
+                        NSLocalizedString("messages_tracked", comment: ""), state.records.count),
                      color: .purple)
         }
     }
 
-    private func statCard(title: String, value: String, sub: String, color: Color) -> some View {
+    private func statCard(titleKey: LocalizedStringKey, value: String, sub: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(titleKey).font(.caption).foregroundStyle(.secondary)
             Text(value).font(.title2.bold().monospacedDigit())
             Text(sub).font(.caption).foregroundStyle(.secondary)
         }
@@ -99,10 +139,57 @@ struct MainWindow: View {
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(color.opacity(0.3)))
     }
 
+    private var efficiencyCard: some View {
+        let a = state.modelEfficiency(days: range.days)
+        let pct = a.totalOpusMessages > 0
+            ? Double(a.sonnetCandidateCount) / Double(a.totalOpusMessages)
+            : 0
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "scale.3d").foregroundStyle(.purple)
+                Text(String.localizedStringWithFormat(
+                    NSLocalizedString("efficiency_title", comment: ""), range.days))
+                    .font(.headline)
+                Spacer()
+                Text(Format.usd(a.estimatedSavingsUSD))
+                    .font(.title3.bold().monospacedDigit())
+                    .foregroundStyle(.green)
+            }
+            if a.totalOpusMessages == 0 {
+                Text("efficiency_empty").font(.caption).foregroundStyle(.secondary)
+            } else {
+                HStack(spacing: 16) {
+                    statBlock(titleKey: "efficiency_opus_messages", value: "\(a.totalOpusMessages)")
+                    statBlock(titleKey: "efficiency_sonnet_candidate", value: "\(a.sonnetCandidateCount)")
+                    statBlock(titleKey: "efficiency_share", value: "\(Int(pct*100))%")
+                }
+                Text("efficiency_explainer").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func statBlock(titleKey: LocalizedStringKey, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(value).font(.title3.bold().monospacedDigit())
+            Text(titleKey).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
     private var chartCard: some View {
         let dailies = state.lastN(days: range.days)
+        let groupLabel: String = {
+            switch groupBy {
+            case .provider:  return NSLocalizedString("group_provider", comment: "")
+            case .model:     return NSLocalizedString("group_model", comment: "")
+            case .project:   return NSLocalizedString("group_project", comment: "")
+            case .tokenKind: return NSLocalizedString("group_token_kind", comment: "")
+            }
+        }()
         return VStack(alignment: .leading, spacing: 8) {
-            Text("Daily tokens — grouped by \(groupBy.rawValue.lowercased())")
+            Text(String.localizedStringWithFormat(
+                NSLocalizedString("chart_title", comment: ""), groupLabel))
                 .font(.headline)
             Chart {
                 ForEach(dailies) { bucket in
@@ -159,97 +246,35 @@ struct MainWindow: View {
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    @ViewBuilder
-    private var folderAccessCardIfNeeded: some View {
-        if case .needsGrant = state.folderAccess.state {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.title2).foregroundStyle(.orange)
-                    Text("Grant access to your Claude logs folder")
-                        .font(.headline)
-                }
-                Text("TokenMeter is running inside the macOS App Sandbox and cannot read **~/.claude/projects** until you explicitly allow it. The permission is read-only and persists across launches.")
-                    .font(.callout).foregroundStyle(.secondary)
-                Button {
-                    Task { await state.requestClaudeFolderAccess() }
-                } label: {
-                    Label("Choose Claude folder…", systemImage: "folder.badge.plus")
-                }
-                .controlSize(.large)
-            }
-            .padding(16)
-            .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.5)))
-        }
-    }
-
-    private var efficiencyCard: some View {
-        let a = state.modelEfficiency(days: range.days)
-        let pct = a.totalOpusMessages > 0
-            ? Double(a.sonnetCandidateCount) / Double(a.totalOpusMessages)
-            : 0
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "scale.3d").foregroundStyle(.purple)
-                Text("Model efficiency — last \(range.days) days").font(.headline)
-                Spacer()
-                Text(Format.usd(a.estimatedSavingsUSD))
-                    .font(.title3.bold().monospacedDigit())
-                    .foregroundStyle(.green)
-            }
-            if a.totalOpusMessages == 0 {
-                Text("No Opus messages in this window — nothing to analyze.")
-                    .font(.caption).foregroundStyle(.secondary)
-            } else {
-                HStack(spacing: 16) {
-                    statBlock(title: "Opus messages", value: "\(a.totalOpusMessages)")
-                    statBlock(title: "Sonnet-candidate", value: "\(a.sonnetCandidateCount)")
-                    statBlock(title: "Share", value: "\(Int(pct*100))%")
-                }
-                Text("Heuristic: an Opus message is flagged as a Sonnet-candidate when its prompt + output were both small enough that Sonnet 4.6 would probably have produced an equivalent answer. The number on the right is your estimated cost saving if those messages had run on Sonnet instead. **This is a guess, not a recommendation** — Opus is genuinely better for complex reasoning even on short prompts.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        }
-        .padding(16)
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func statBlock(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(value).font(.title3.bold().monospacedDigit())
-            Text(title).font(.caption).foregroundStyle(.secondary)
-        }
-    }
-
     private var mcpCard: some View {
         let totals = state.mcpToolTotals(days: range.days)
         return VStack(alignment: .leading, spacing: 8) {
-            Text("MCP server-side tools — last \(range.days) days").font(.headline)
+            Text(String.localizedStringWithFormat(
+                NSLocalizedString("mcp_title", comment: ""), range.days))
+                .font(.headline)
             HStack(spacing: 24) {
                 mcpStat(icon: "magnifyingglass.circle.fill",
-                        title: "Web search calls",
+                        titleKey: "mcp_web_search",
                         value: totals.webSearch, color: .blue)
                 mcpStat(icon: "arrow.down.circle.fill",
-                        title: "Web fetch calls",
+                        titleKey: "mcp_web_fetch",
                         value: totals.webFetch, color: .indigo)
                 Spacer()
             }
             if totals.webSearch == 0 && totals.webFetch == 0 {
-                Text("No server-side tool calls recorded in this window.")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text("mcp_empty").font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)
         .background(.background.secondary, in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private func mcpStat(icon: String, title: String, value: Int, color: Color) -> some View {
+    private func mcpStat(icon: String, titleKey: LocalizedStringKey, value: Int, color: Color) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon).foregroundStyle(color).font(.title2)
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(value)").font(.title2.bold().monospacedDigit())
-                Text(title).font(.caption).foregroundStyle(.secondary)
+                Text(titleKey).font(.caption).foregroundStyle(.secondary)
             }
         }
     }
@@ -257,19 +282,20 @@ struct MainWindow: View {
     private var topMessagesCard: some View {
         let top = state.topExpensive(days: range.days, limit: 10)
         return VStack(alignment: .leading, spacing: 8) {
-            Text("Top 10 most expensive messages — last \(range.days) days")
+            Text(String.localizedStringWithFormat(
+                NSLocalizedString("top_messages_title", comment: ""), range.days))
                 .font(.headline)
             if top.isEmpty {
-                Text("Nothing in this window yet").foregroundStyle(.secondary).font(.caption)
+                Text("top_messages_empty").foregroundStyle(.secondary).font(.caption)
             } else {
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                     GridRow {
                         Text("#").font(.caption).foregroundStyle(.secondary)
-                        Text("When").font(.caption).foregroundStyle(.secondary)
-                        Text("Model").font(.caption).foregroundStyle(.secondary)
-                        Text("Project").font(.caption).foregroundStyle(.secondary)
-                        Text("Tokens").font(.caption).foregroundStyle(.secondary)
-                        Text("Cost").font(.caption).foregroundStyle(.secondary)
+                        Text("col_when").font(.caption).foregroundStyle(.secondary)
+                        Text("col_model").font(.caption).foregroundStyle(.secondary)
+                        Text("col_project").font(.caption).foregroundStyle(.secondary)
+                        Text("col_tokens").font(.caption).foregroundStyle(.secondary)
+                        Text("col_cost").font(.caption).foregroundStyle(.secondary)
                     }
                     Divider()
                     ForEach(Array(top.enumerated()), id: \.element.id) { idx, r in
@@ -296,14 +322,17 @@ struct MainWindow: View {
         let maxV = max(1, totals.first?.totals.totalTokens ?? 1)
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Top projects — last \(range.days) days").font(.headline)
+                Text(String.localizedStringWithFormat(
+                    NSLocalizedString("projects_title", comment: ""), range.days))
+                    .font(.headline)
                 Spacer()
-                Text("\(totals.count) project\(totals.count == 1 ? "" : "s")")
+                let key = totals.count == 1 ? "projects_count_one" : "projects_count_other"
+                Text(String.localizedStringWithFormat(
+                    NSLocalizedString(key, comment: ""), totals.count))
                     .font(.caption).foregroundStyle(.secondary)
             }
             if totals.isEmpty {
-                Text("No Claude Code projects tracked yet")
-                    .foregroundStyle(.secondary).font(.caption)
+                Text("projects_empty").foregroundStyle(.secondary).font(.caption)
             } else {
                 VStack(spacing: 6) {
                     ForEach(totals.prefix(8), id: \.name) { entry in
@@ -319,17 +348,17 @@ struct MainWindow: View {
     private var sessionsCard: some View {
         let sessions = state.sessions.suffix(10).reversed() as [SessionBlock]
         return VStack(alignment: .leading, spacing: 8) {
-            Text("Recent 5h session blocks").font(.headline)
+            Text("sessions_title").font(.headline)
             if sessions.isEmpty {
-                Text("No sessions tracked yet").foregroundStyle(.secondary)
+                Text("sessions_empty").foregroundStyle(.secondary)
             } else {
                 Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                     GridRow {
-                        Text("Started").font(.caption).foregroundStyle(.secondary)
-                        Text("Model").font(.caption).foregroundStyle(.secondary)
-                        Text("Tokens").font(.caption).foregroundStyle(.secondary)
-                        Text("Cost").font(.caption).foregroundStyle(.secondary)
-                        Text("Status").font(.caption).foregroundStyle(.secondary)
+                        Text("col_started").font(.caption).foregroundStyle(.secondary)
+                        Text("col_model").font(.caption).foregroundStyle(.secondary)
+                        Text("col_tokens").font(.caption).foregroundStyle(.secondary)
+                        Text("col_cost").font(.caption).foregroundStyle(.secondary)
+                        Text("col_status").font(.caption).foregroundStyle(.secondary)
                     }
                     Divider()
                     ForEach(sessions, id: \.startedAt) { s in
@@ -340,11 +369,11 @@ struct MainWindow: View {
                             Text(Format.tokens(s.totals.totalTokens)).font(.caption.monospacedDigit())
                             Text(Format.usd(s.totals.costUSD)).font(.caption.monospacedDigit())
                             if s.isActive {
-                                Label("active", systemImage: "circle.fill")
+                                Label("session_active", systemImage: "circle.fill")
                                     .labelStyle(.titleAndIcon)
                                     .foregroundStyle(.green).font(.caption)
                             } else {
-                                Text("done").foregroundStyle(.secondary).font(.caption)
+                                Text("session_done").foregroundStyle(.secondary).font(.caption)
                             }
                         }
                     }
@@ -357,37 +386,30 @@ struct MainWindow: View {
 
     private var settingsCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Budgets & Notifications").font(.headline)
-            Text("These don't reflect real plan limits (Anthropic doesn't expose them). They're targets so the bars are meaningful.")
-                .font(.caption).foregroundStyle(.secondary)
+            Text("settings_title").font(.headline)
+            Text("settings_disclaimer").font(.caption).foregroundStyle(.secondary)
             HStack {
-                Text("Session token budget")
-                Spacer()
+                Text("session_token_budget"); Spacer()
                 BudgetField(value: $state.sessionTokenBudget)
             }
             HStack {
-                Text("Weekly token budget")
-                Spacer()
+                Text("weekly_token_budget"); Spacer()
                 BudgetField(value: $state.weeklyTokenBudget)
             }
             HStack {
-                Text("Session message budget")
-                Spacer()
+                Text("session_message_budget"); Spacer()
                 BudgetField(value: $state.sessionMessageBudget)
             }
             Divider().padding(.vertical, 2)
-            Toggle("Notify at 80% / 95% of session budget", isOn: $state.notificationsEnabled)
+            Toggle("notify_thresholds", isOn: $state.notificationsEnabled)
             Divider().padding(.vertical, 2)
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Toggle("Launch TokenMeter at login", isOn: Binding(
-                        get: { launch.isEnabled },
-                        set: { launch.setEnabled($0) }
-                    ))
-                    Text(launch.statusDetail)
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle("launch_at_login", isOn: Binding(
+                    get: { launch.isEnabled },
+                    set: { launch.setEnabled($0) }
+                ))
+                Text(launch.statusDetail)
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .padding(16)
@@ -435,7 +457,6 @@ struct ProjectRow: View {
         }
     }
 
-    /// Strip the URL-encoded `-Users-seongho-Documents-…` prefix to the last segment.
     private var displayName: String {
         guard name != "unattributed" else { return name }
         let trimmed = name.hasPrefix("-") ? String(name.dropFirst()) : name

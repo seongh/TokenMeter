@@ -233,6 +233,26 @@ final class AppState: ObservableObject {
         return (search, fetch)
     }
 
+    // MARK: - Unified status
+
+    /// Current burn-rate ratio (today vs 7-day baseline). nil when no baseline.
+    func currentBurnRatio() -> Double? {
+        guard let s = activeSession else { return nil }
+        let elapsedHours = -s.startedAt.timeIntervalSinceNow / 3600
+        guard elapsedHours > 0 else { return nil }
+        let rate = Double(s.totals.totalTokens) / elapsedHours
+        let baseline = baselineTokensPerHour()
+        guard baseline > 0 else { return nil }
+        return rate / baseline
+    }
+
+    /// One status level the whole UI agrees on.
+    var status: StatusLevel {
+        guard let s = activeSession else { return .idle }
+        let pct = Double(s.totals.totalTokens) / Double(max(1, sessionTokenBudget))
+        return StatusLevel.from(percentage: pct, baselineRatio: currentBurnRatio())
+    }
+
     // MARK: - Burn-rate baseline
 
     /// Tokens-per-hour averaged over completed sessions in the last 7 days.

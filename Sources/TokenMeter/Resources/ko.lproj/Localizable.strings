@@ -1,0 +1,125 @@
+/* Common */
+"app_name" = "TokenMeter";
+"tagline" = "AI 토큰 사용량 통합 트래커";
+"open_dashboard" = "대시보드 열기";
+"quit" = "종료";
+
+/* Menu bar panel */
+"today" = "오늘";
+"this_week" = "이번 주";
+"last_n_days" = "최근 %lld일";
+"active_session" = "사용 중 세션 (5시간)";
+"ends_in" = "%@ 후 리셋";
+"no_active_session" = "활성 세션 없음";
+"tokens" = "토큰";
+"messages" = "메시지";
+"providers" = "공급자";
+"no_data_yet" = "데이터 없음";
+"current_model" = "사용 중 모델";
+
+/* Status levels */
+"status_relaxed_title" = "여유 있음";
+"status_relaxed_body" = "오늘 평소 페이스로 사용 중이에요.";
+"status_watch_title" = "조금 빠른 페이스";
+"status_watch_body" = "평소보다 빨리 토큰을 쓰고 있어요.";
+"status_critical_title" = "한도 임박";
+"status_critical_body" = "세션 리셋 전에 마무리하는 게 좋아요.";
+"status_idle_title" = "활성 세션 없음";
+"status_idle_body" = "Claude Code를 켜면 추적이 시작돼요.";
+
+/* Hero card */
+"session_remaining" = "%@ 후 세션 리셋";
+"session_remaining_label" = "후 리셋";
+"pace_faster" = "평소보다 빠름";
+"pace_slower" = "평소보다 느림";
+"pace_normal" = "평소 페이스";
+"vs_baseline_faster" = "평소보다 %.1f배 빠른 페이스";
+"vs_baseline_slower" = "평소보다 %.1f배 느린 페이스";
+"vs_baseline_normal" = "평소와 비슷한 페이스";
+
+/* Dashboard cards */
+"summary_today" = "오늘";
+"summary_this_week" = "이번 주";
+"summary_active_session" = "사용 중 세션";
+"summary_current_model" = "사용 중 모델";
+"messages_tracked" = "%lld개 메시지 기록됨";
+
+"efficiency_title" = "모델 효율성 — 최근 %lld일";
+"efficiency_opus_messages" = "Opus 메시지";
+"efficiency_sonnet_candidate" = "Sonnet으로 충분";
+"efficiency_share" = "비율";
+"efficiency_empty" = "이 기간에 Opus 메시지가 없어 분석할 게 없어요.";
+"efficiency_explainer" = "휴리스틱: 프롬프트와 응답이 모두 짧은 Opus 메시지를 'Sonnet으로 충분'으로 분류해요. 오른쪽 금액은 그 메시지들을 Sonnet 4.6으로 처리했을 때 절약됐을 추정 비용이에요. **추천이 아닌 참고용** — 복잡한 추론이 필요한 작업엔 Opus가 더 낫습니다.";
+
+"chart_title" = "일별 토큰 사용 — %@ 기준";
+"group_provider" = "공급자";
+"group_model" = "모델";
+"group_project" = "프로젝트";
+"group_token_kind" = "토큰 종류";
+"range_week" = "1주";
+"range_two_weeks" = "2주";
+"range_month" = "1개월";
+
+"mcp_title" = "MCP 서버 도구 — 최근 %lld일";
+"mcp_web_search" = "웹 검색 호출";
+"mcp_web_fetch" = "웹 가져오기 호출";
+"mcp_empty" = "이 기간에 서버 도구 호출이 없었어요.";
+
+"projects_title" = "상위 프로젝트 — 최근 %lld일";
+"projects_count_one" = "프로젝트 1개";
+"projects_count_other" = "프로젝트 %lld개";
+"projects_empty" = "아직 추적된 Claude Code 프로젝트가 없어요.";
+
+"top_messages_title" = "가장 비싼 메시지 10개 — 최근 %lld일";
+"top_messages_empty" = "이 기간에 데이터가 없어요.";
+"col_when" = "시각";
+"col_model" = "모델";
+"col_project" = "프로젝트";
+"col_tokens" = "토큰";
+"col_cost" = "비용";
+"col_started" = "시작";
+"col_status" = "상태";
+
+"sessions_title" = "최근 5시간 세션";
+"sessions_empty" = "아직 추적된 세션이 없어요.";
+"session_active" = "진행 중";
+"session_done" = "종료됨";
+
+/* Settings */
+"settings_title" = "예산 & 알림";
+"settings_disclaimer" = "Anthropic이 실제 요금제 한도를 공개하지 않아서, 여기 값은 본인이 설정하는 목표치입니다.";
+"session_token_budget" = "세션 토큰 예산";
+"weekly_token_budget" = "주간 토큰 예산";
+"session_message_budget" = "세션 메시지 예산";
+"notify_thresholds" = "세션 예산의 80% / 95% 도달 시 알림";
+"launch_at_login" = "로그인 시 자동 실행";
+
+/* Folder access (sandbox) */
+"folder_grant_title" = "Claude 로그 폴더 접근 권한이 필요해요";
+"folder_grant_body" = "TokenMeter가 macOS App Sandbox 안에서 동작 중이라서 **~/.claude/projects** 폴더를 읽으려면 명시적 권한이 필요해요. 읽기 전용이고, 한 번 설정하면 다음 실행 때도 유지됩니다.";
+"folder_grant_button" = "Claude 폴더 선택…";
+
+/* Export */
+"export" = "내보내기";
+"export_csv_visible" = "현재 기간을 CSV로";
+"export_json_visible" = "현재 기간을 JSON으로";
+"export_csv_all" = "전체 기록을 CSV로";
+"export_json_all" = "전체 기록을 JSON으로";
+
+/* Onboarding */
+"onboarding_welcome_title" = "TokenMeter에 오신 걸 환영합니다";
+"onboarding_welcome_body" = "Claude를 얼마나 썼는지 메뉴바에서 실시간으로 보여주는 앱이에요. 추측 없이 정확한 숫자만.";
+"onboarding_how_title" = "동작 원리";
+"onboarding_how_body" = "Claude Code의 로컬 로그를 읽어서 모델이 쓴 토큰을 일일이 카운트해요. 데이터는 Mac을 떠나지 않습니다.";
+"onboarding_limits_title" = "솔직한 한계";
+"onboarding_limits_body" = "Anthropic이 정확한 Max 요금제 한도를 공개하지 않아서, 세션 게이지는 5시간 윈도우와 본인이 정한 예산을 기준으로 합니다. 평소보다 빨리 쓰면 알려드릴게요.";
+"onboarding_next" = "다음";
+"onboarding_done" = "시작하기";
+
+/* Format units */
+"time_hours_minutes" = "%lld시간 %lld분";
+"time_minutes_only" = "%lld분";
+"relative_just_now" = "방금 전";
+"relative_seconds" = "%lld초 전";
+"relative_minutes" = "%lld분 전";
+"relative_hours" = "%lld시간 전";

@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "TokenMeter",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [
         .executable(name: "TokenMeter", targets: ["TokenMeter"])
@@ -10,7 +11,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "TokenMeter",
-            path: "Sources/TokenMeter"
+            path: "Sources/TokenMeter",
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "TokenMeterTests",

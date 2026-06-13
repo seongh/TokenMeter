@@ -10,6 +10,8 @@ struct TokenMeterApp: App {
         ClaudeCodeProvider()
     ])
 
+    @AppStorage("onboardingCompleted") private var onboardingCompleted: Bool = false
+
     var body: some Scene {
         MenuBarExtra {
             MenuBarContent(state: state)
@@ -20,7 +22,15 @@ struct TokenMeterApp: App {
 
         Window("TokenMeter", id: "main") {
             MainWindow(state: state)
+                .sheet(isPresented: .constant(!onboardingCompleted)) {
+                    OnboardingView()
+                }
         }
-        .defaultSize(width: 960, height: 700)
+        .defaultSize(width: 960, height: 720)
+
+        Window("Welcome", id: "onboarding") {
+            OnboardingView()
+        }
+        .windowResizability(.contentSize)
     }
 }
