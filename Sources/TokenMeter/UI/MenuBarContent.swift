@@ -94,26 +94,33 @@ struct MenuBarContent: View {
         let level = state.status
         let session = state.activeSession
         return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
                 Image(systemName: level.symbol)
                     .font(.title2).foregroundStyle(level.tint)
-                VStack(alignment: .leading, spacing: 1) {
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(level.titleKey).font(.system(size: 15, weight: .semibold))
-                    Text(level.bodyKey).font(.caption).foregroundStyle(.secondary)
+                    Text(level.bodyKey)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
             if let s = session {
                 let used = s.totals.totalTokens
                 let budget = max(1, state.sessionTokenBudget)
                 let pct = min(1.0, Double(used) / Double(budget))
                 HStack(alignment: .firstTextBaseline) {
-                    Text(Format.clockShort(s.remaining))
-                        .font(.title3.monospacedDigit().bold())
-                    Text("session_remaining_label").font(.caption).foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(Format.tokens(used)) · \(s.totals.messages) msg")
+                    Text(Format.tokens(used)).font(.title3.monospacedDigit().bold())
+                    Text("tokens").font(.caption).foregroundStyle(.secondary)
+                    Text("·").font(.caption).foregroundStyle(.secondary)
+                    Text("\(s.totals.messages) msg")
                         .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    Spacer()
+                    Text(Format.clockShort(s.remaining))
+                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                    Text("session_remaining_label")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
                 ProgressView(value: pct).tint(level.tint)
             }
@@ -158,6 +165,7 @@ struct MenuBarContent: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(Format.tokens(state.weekTotals.totalTokens))
                     .font(.title3.monospacedDigit().bold())
+                Text("tokens").foregroundStyle(.secondary).font(.caption)
                 Spacer()
                 Text("\(state.weekTotals.messages) msg")
                     .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
