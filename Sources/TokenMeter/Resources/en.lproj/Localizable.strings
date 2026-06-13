@@ -116,6 +116,11 @@
 "onboarding_next" = "Next";
 "onboarding_done" = "Get started";
 
+/* Human-friendly comparisons */
+"humanized_books" = "≈ %lld books of text";
+"humanized_pages" = "≈ %lld pages";
+"tokens_hint" = "1 token ≈ ¾ of an English word";
+
 /* Format units */
 "time_hours_minutes" = "%lldh %lldm";
 "time_minutes_only" = "%lldm";

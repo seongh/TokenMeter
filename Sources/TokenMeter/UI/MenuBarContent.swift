@@ -111,6 +111,9 @@ struct MenuBarContent: View {
                 Spacer()
                 Text(Format.usd(t.costUSD)).foregroundStyle(.secondary).font(.caption.monospacedDigit())
             }
+            if let hint = Format.humanizedTokens(t.totalTokens) {
+                Text(hint).font(.caption2).foregroundStyle(.tertiary)
+            }
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
     }
@@ -130,6 +133,9 @@ struct MenuBarContent: View {
                 Spacer()
                 Text("\(state.weekTotals.messages) msg")
                     .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+            }
+            if let hint = Format.humanizedTokens(state.weekTotals.totalTokens) {
+                Text(hint).font(.caption2).foregroundStyle(.tertiary)
             }
             MiniWeeklyBars(buckets: state.lastN(days: 7))
                 .frame(height: 28)

@@ -38,9 +38,12 @@ struct HeroCard: View {
 
             // Key metrics row
             HStack(spacing: 24) {
-                metric(value: Format.tokens(used), labelKey: "tokens")
+                metric(
+                    value: Format.tokens(used),
+                    labelKey: "tokens",
+                    hint: Format.humanizedTokens(used))
                 if let s = session {
-                    metric(value: "\(s.totals.messages)", labelKey: "messages")
+                    metric(value: "\(s.totals.messages)", labelKey: "messages", hint: nil)
                 }
                 if let ratio = state.currentBurnRatio() {
                     paceMetric(ratio: ratio)
@@ -75,10 +78,13 @@ struct HeroCard: View {
         )
     }
 
-    private func metric(value: String, labelKey: LocalizedStringKey) -> some View {
+    private func metric(value: String, labelKey: LocalizedStringKey, hint: String?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value).font(.title2.bold().monospacedDigit())
             Text(labelKey).font(.caption).foregroundStyle(.secondary)
+            if let hint {
+                Text(hint).font(.caption2).foregroundStyle(.tertiary)
+            }
         }
     }
 

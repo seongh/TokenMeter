@@ -116,6 +116,11 @@
 "onboarding_next" = "다음";
 "onboarding_done" = "시작하기";
 
+/* Human-friendly comparisons */
+"humanized_books" = "≈ 책 %lld권 분량";
+"humanized_pages" = "≈ %lld페이지 분량";
+"tokens_hint" = "토큰 1개 ≈ 한국어 1~2글자";
+
 /* Format units */
 "time_hours_minutes" = "%lld시간 %lld분";
 "time_minutes_only" = "%lld분";

@@ -30,6 +30,26 @@ enum Format {
         x < 1 ? String(format: "$%.3f", x) : String(format: "$%.2f", x)
     }
 
+    /// Humanize a token count into something a non-expert can picture.
+    /// Conversion factors (rounded for friendliness, not precision):
+    ///   ~100K tokens ≈ 1 book of prose  (≈ 80K words ≈ 200 pages)
+    ///   ~700  tokens ≈ 1 page
+    ///   ~5    tokens ≈ 1 chat turn (rough lower bound)
+    /// Returns nil for amounts too small to bother humanizing.
+    static func humanizedTokens(_ tokens: Int) -> String? {
+        if tokens >= 100_000 {
+            let books = tokens / 100_000
+            return String.localizedStringWithFormat(
+                NSLocalizedString("humanized_books", comment: ""), books)
+        }
+        if tokens >= 700 {
+            let pages = tokens / 700
+            return String.localizedStringWithFormat(
+                NSLocalizedString("humanized_pages", comment: ""), pages)
+        }
+        return nil
+    }
+
     static func shortDate(_ d: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = isKorean ? "M월 d일" : "M/d"
