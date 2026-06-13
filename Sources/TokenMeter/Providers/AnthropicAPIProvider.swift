@@ -21,6 +21,9 @@ final class AnthropicAPIProvider: UsageProvider, @unchecked Sendable {
 
     private var apiKey: String? { Keychain.get("anthropic_admin_key") }
 
+    /// Public for AppState's optional wiring.
+    var hasKey: Bool { (apiKey?.isEmpty == false) }
+
     func snapshot() async throws -> [UsageRecord] {
         guard let key = apiKey, !key.isEmpty else { return [] }
         return try await fetchUsage(key: key, days: 30)

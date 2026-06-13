@@ -7,7 +7,7 @@ struct MainWindow: View {
     @ObservedObject var state: AppState
     @StateObject private var launch = LaunchAtLogin()
     @State private var range: Range = .week
-    @State private var groupBy: GroupBy = .provider
+    @State private var groupBy: GroupBy = .model
 
     enum Range: String, CaseIterable, Identifiable {
         case week, twoWeeks, month
@@ -22,11 +22,10 @@ struct MainWindow: View {
         }
     }
     enum GroupBy: String, CaseIterable, Identifiable {
-        case provider, model, project, tokenKind
+        case model, project, tokenKind
         var id: String { rawValue }
         var labelKey: LocalizedStringKey {
             switch self {
-            case .provider:  return "group_provider"
             case .model:     return "group_model"
             case .project:   return "group_project"
             case .tokenKind: return "group_token_kind"
@@ -181,7 +180,6 @@ struct MainWindow: View {
         let dailies = state.lastN(days: range.days)
         let groupLabel: String = {
             switch groupBy {
-            case .provider:  return NSLocalizedString("group_provider", comment: "")
             case .model:     return NSLocalizedString("group_model", comment: "")
             case .project:   return NSLocalizedString("group_project", comment: "")
             case .tokenKind: return NSLocalizedString("group_token_kind", comment: "")
@@ -194,14 +192,6 @@ struct MainWindow: View {
             Chart {
                 ForEach(dailies) { bucket in
                     switch groupBy {
-                    case .provider:
-                        ForEach(Array(bucket.byProvider.keys.sorted { $0.rawValue < $1.rawValue }), id: \.self) { p in
-                            BarMark(
-                                x: .value("Day", bucket.date, unit: .day),
-                                y: .value("Tokens", bucket.byProvider[p]?.totalTokens ?? 0)
-                            )
-                            .foregroundStyle(by: .value("Provider", p.displayName))
-                        }
                     case .model:
                         ForEach(Array(bucket.byModel.keys.sorted()), id: \.self) { m in
                             BarMark(

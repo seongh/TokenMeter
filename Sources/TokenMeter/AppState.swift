@@ -9,7 +9,6 @@ final class AppState: ObservableObject {
     @Published private(set) var records: [UsageRecord] = []
     @Published private(set) var isLoading: Bool = true
     @Published private(set) var lastUpdated: Date = .distantPast
-    @Published private(set) var detectedInstalls: [InstallProbe.Detection] = []
     @Published private(set) var providerStatuses: [Provider: ProviderStatus] = [:]
 
     /// Configured plan token budget. Claude Max session limits aren't exposed
@@ -65,9 +64,7 @@ final class AppState: ObservableObject {
         }
         // 2. Run snapshots (may be no-op for cached files).
         await loadSnapshots()
-        // 3. Detect other AI tool installs (read-only directory probe only).
-        detectedInstalls = InstallProbe.probeAll()
-        // 4. Start live streams.
+        // 3. Start live streams.
         startLive()
         // 5. Notification permission request (no-op if already granted/denied).
         if notificationsEnabled { await notifier.requestAuthorizationIfNeeded() }

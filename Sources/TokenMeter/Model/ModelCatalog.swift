@@ -47,14 +47,7 @@ enum ModelCatalog {
                   inputUSDPerMTok: 3, cacheWriteUSDPerMTok: 3.75, cacheReadUSDPerMTok: 0.30, outputUSDPerMTok: 15),
         ModelInfo(id: "claude-haiku-4-5", displayName: "Claude Haiku 4.5", family: "Claude Haiku",
                   contextWindow: 200_000,
-                  inputUSDPerMTok: 1, cacheWriteUSDPerMTok: 1.25, cacheReadUSDPerMTok: 0.10, outputUSDPerMTok: 5),
-        // OpenAI (approximate, list price)
-        ModelInfo(id: "gpt-4o", displayName: "GPT-4o", family: "GPT-4o",
-                  contextWindow: 128_000,
-                  inputUSDPerMTok: 2.50, cacheWriteUSDPerMTok: 2.50, cacheReadUSDPerMTok: 1.25, outputUSDPerMTok: 10),
-        ModelInfo(id: "gpt-4o-mini", displayName: "GPT-4o mini", family: "GPT-4o",
-                  contextWindow: 128_000,
-                  inputUSDPerMTok: 0.15, cacheWriteUSDPerMTok: 0.15, cacheReadUSDPerMTok: 0.075, outputUSDPerMTok: 0.60)
+                  inputUSDPerMTok: 1, cacheWriteUSDPerMTok: 1.25, cacheReadUSDPerMTok: 0.10, outputUSDPerMTok: 5)
     ]
 
     /// Best-effort match: prefer exact id, then longest-prefix.

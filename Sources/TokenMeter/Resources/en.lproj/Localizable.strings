@@ -1,6 +1,6 @@
 /* Common */
 "app_name" = "TokenMeter";
-"tagline" = "Universal AI token tracker";
+"tagline" = "Claude usage tracker";
 "open_dashboard" = "Open dashboard";
 "quit" = "Quit";
 
@@ -13,7 +13,6 @@
 "no_active_session" = "No active session";
 "tokens" = "tokens";
 "messages" = "messages";
-"providers" = "Providers";
 "no_data_yet" = "No data yet";
 "current_model" = "Current model";
 
@@ -109,11 +108,11 @@
 
 /* Onboarding */
 "onboarding_welcome_title" = "Welcome to TokenMeter";
-"onboarding_welcome_body" = "A menu-bar app that shows how much you've used Claude — in real time, with no guesswork.";
+"onboarding_welcome_body" = "Real-time Claude Code usage in your menu bar — no guesswork, just the actual numbers.";
 "onboarding_how_title" = "How it works";
-"onboarding_how_body" = "TokenMeter watches your local Claude Code logs and counts every token the model used. Your data never leaves your Mac.";
-"onboarding_limits_title" = "Honest limits";
-"onboarding_limits_body" = "Anthropic doesn't publish the exact Max plan limit, so the session bar uses a 5-hour window and a budget you set. We'll tell you when you're burning faster than usual.";
+"onboarding_how_body" = "TokenMeter reads your local Claude Code logs (~/.claude/projects) and counts every token the model used. Your data never leaves your Mac.";
+"onboarding_limits_title" = "Honest limits — Claude only";
+"onboarding_limits_body" = "TokenMeter only tracks Claude Code. ChatGPT, Cursor, and Gemini don't expose token data, so we refuse to fake the numbers. Claude.ai web and desktop are the same. Honesty over false coverage.";
 "onboarding_next" = "Next";
 "onboarding_done" = "Get started";
 

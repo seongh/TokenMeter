@@ -23,15 +23,9 @@ struct UsageRecord: Sendable, Identifiable, Hashable, Codable {
 
     /// "Billable equivalent" using the standard Anthropic cache pricing ratios
     /// (cache_creation = 1.25x base input, cache_read = 0.1x base input).
-    /// Other providers fall back to raw sum.
     var billableInputEquivalent: Double {
-        switch provider {
-        case .claudeCode, .anthropicAPI:
-            return Double(inputTokens)
-                 + Double(cacheCreationTokens) * 1.25
-                 + Double(cacheReadTokens) * 0.10
-        default:
-            return Double(totalInputTokens)
-        }
+        Double(inputTokens)
+            + Double(cacheCreationTokens) * 1.25
+            + Double(cacheReadTokens) * 0.10
     }
 }

@@ -1,6 +1,6 @@
 /* Common */
 "app_name" = "TokenMeter";
-"tagline" = "AI 토큰 사용량 통합 트래커";
+"tagline" = "Claude 사용량 트래커";
 "open_dashboard" = "대시보드 열기";
 "quit" = "종료";
 
@@ -13,7 +13,6 @@
 "no_active_session" = "활성 세션 없음";
 "tokens" = "토큰";
 "messages" = "메시지";
-"providers" = "공급자";
 "no_data_yet" = "데이터 없음";
 "current_model" = "사용 중 모델";
 
@@ -109,11 +108,11 @@
 
 /* Onboarding */
 "onboarding_welcome_title" = "TokenMeter에 오신 걸 환영합니다";
-"onboarding_welcome_body" = "Claude를 얼마나 썼는지 메뉴바에서 실시간으로 보여주는 앱이에요. 추측 없이 정확한 숫자만.";
+"onboarding_welcome_body" = "Claude Code 사용량을 메뉴바에서 실시간으로 보여주는 앱이에요. 추측 없이 정확한 숫자만.";
 "onboarding_how_title" = "동작 원리";
-"onboarding_how_body" = "Claude Code의 로컬 로그를 읽어서 모델이 쓴 토큰을 일일이 카운트해요. 데이터는 Mac을 떠나지 않습니다.";
-"onboarding_limits_title" = "솔직한 한계";
-"onboarding_limits_body" = "Anthropic이 정확한 Max 요금제 한도를 공개하지 않아서, 세션 게이지는 5시간 윈도우와 본인이 정한 예산을 기준으로 합니다. 평소보다 빨리 쓰면 알려드릴게요.";
+"onboarding_how_body" = "Claude Code의 로컬 로그(~/.claude/projects)를 읽어서 모델이 쓴 토큰을 일일이 카운트해요. 데이터는 Mac을 떠나지 않습니다.";
+"onboarding_limits_title" = "솔직한 한계 — Claude 전용";
+"onboarding_limits_body" = "Claude Code만 추적합니다. ChatGPT·Cursor·Gemini는 토큰 데이터를 노출하지 않아서 정확히 추적할 수 없어요. Claude.ai 웹/데스크탑도 마찬가지입니다. 가짜 숫자 대신 정직한 한계를 택했어요.";
 "onboarding_next" = "다음";
 "onboarding_done" = "시작하기";
 
