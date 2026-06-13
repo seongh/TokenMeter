@@ -26,6 +26,11 @@ final class AppState: ObservableObject {
     private weak var claudeCode: ClaudeCodeProvider?
     let folderAccess: ClaudeFolderAccess
 
+    /// Rolling history of (timestamp, cumulative total tokens) for the last
+    /// 30 minutes. Used to compute "what did we use since 5 minutes ago" so
+    /// the menu bar can show short-term deltas without storing every event.
+    private var totalsHistory: [(at: Date, total: Int)] = []
+
     init(providers: [any UsageProvider],
          store: StateStore = .init(),
          notifier: SessionNotifier = .init(),
@@ -118,6 +123,7 @@ final class AppState: ObservableObject {
             indexById.removeAll(keepingCapacity: true)
             for (i, r) in records.enumerated() { indexById[r.id] = i }
             lastUpdated = Date()
+            recordTotalsSnapshot()
             persist()
             if notificationsEnabled, let s = activeSession {
                 notifier.evaluate(session: s, budget: sessionTokenBudget)
@@ -126,6 +132,32 @@ final class AppState: ObservableObject {
                     baselineTokensPerHour: baselineTokensPerHour())
             }
         }
+    }
+
+    /// Push the current cumulative token total into rolling history and
+    /// drop snapshots older than 30 minutes.
+    private func recordTotalsSnapshot() {
+        let now = Date()
+        let total = records.reduce(0) { $0 + $1.totalTokens }
+        totalsHistory.append((now, total))
+        let cutoff = now.addingTimeInterval(-30 * 60)
+        totalsHistory.removeAll(where: { $0.at < cutoff })
+    }
+
+    /// Tokens added in the last N minutes. nil when we don't have an old
+    /// enough baseline yet to compare against.
+    func tokensAdded(inLastMinutes minutes: Int) -> Int? {
+        guard let latest = totalsHistory.last else { return nil }
+        let cutoff = Date().addingTimeInterval(-Double(minutes) * 60)
+        guard let baseline = totalsHistory.first(where: { $0.at <= cutoff })
+              ?? totalsHistory.first
+        else { return nil }
+        // Only return a delta if our baseline is actually older than ~half
+        // the requested window — otherwise we have nothing to compare to.
+        guard baseline.at < Date().addingTimeInterval(-Double(minutes) * 30) else {
+            return nil
+        }
+        return max(0, latest.total - baseline.total)
     }
 
     private func persist() {

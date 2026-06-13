@@ -120,6 +120,11 @@
 "humanized_books" = "≈ 책 %lld권 분량";
 "humanized_pages" = "≈ %lld페이지 분량";
 
+/* Recency & deltas */
+"updated_just_now" = "방금 전 업데이트";
+"updated_relative" = "%@ 업데이트";
+"delta_added" = "+%@ 토큰 (최근 %lld분)";
+
 /* Menu bar label */
 "menubar_time_left" = "%@ 남음";
 "menubar_today_tokens" = "오늘 %@ 토큰";

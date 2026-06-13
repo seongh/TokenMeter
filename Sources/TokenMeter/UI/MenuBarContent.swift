@@ -13,6 +13,7 @@ struct MenuBarLabel: View {
                     NSLocalizedString("menubar_session_tokens", comment: ""),
                     Format.tokens(s.totals.totalTokens)))
                     .font(.system(size: 12, weight: .medium).monospacedDigit())
+                trendArrow
             }
         } else {
             // No active session — fall back to today's volume as a book count.
@@ -27,6 +28,23 @@ struct MenuBarLabel: View {
 
     private func pct(_ s: SessionBlock) -> Double {
         min(1.0, Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget)))
+    }
+
+    /// Tiny direction arrow encoding current burn rate vs 7-day baseline.
+    /// Hidden when there's no baseline yet (early in a session, or new install).
+    @ViewBuilder
+    private var trendArrow: some View {
+        if let ratio = state.currentBurnRatio() {
+            if ratio >= 1.5 {
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.red)
+            } else if ratio <= 0.66 {
+                Image(systemName: "arrow.down.right")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.green)
+            }
+        }
     }
 
     private var idleLabel: String {
@@ -126,8 +144,41 @@ struct MenuBarContent: View {
                 }
                 ProgressView(value: pct).tint(level.tint)
             }
+            recencyLine
         }
         .padding(.horizontal, 12).padding(.vertical, 8)
+    }
+
+    /// "방금 +5.2M 토큰 · 1분 전 업데이트" — only rendered when there's
+    /// meaningful information (recent delta or last-updated within memory).
+    @ViewBuilder
+    private var recencyLine: some View {
+        let delta = state.tokensAdded(inLastMinutes: 5)
+        let updated = state.lastUpdated
+        let isFresh = updated > .distantPast
+        if isFresh || (delta ?? 0) > 0 {
+            HStack(spacing: 6) {
+                if let delta, delta > 10_000 {
+                    Text(String.localizedStringWithFormat(
+                        NSLocalizedString("delta_added", comment: ""),
+                        Format.tokens(delta), 5))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                Spacer()
+                Text(updatedLabel(updated))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+
+    private func updatedLabel(_ d: Date) -> String {
+        let s = -d.timeIntervalSinceNow
+        if s < 10 { return NSLocalizedString("updated_just_now", comment: "") }
+        return String.localizedStringWithFormat(
+            NSLocalizedString("updated_relative", comment: ""),
+            Format.relative(d))
     }
 
     private var todaySection: some View {

@@ -120,6 +120,11 @@
 "humanized_books" = "≈ %lld books of text";
 "humanized_pages" = "≈ %lld pages";
 
+/* Recency & deltas */
+"updated_just_now" = "Just updated";
+"updated_relative" = "Updated %@";
+"delta_added" = "+%@ tokens (last %lld min)";
+
 /* Menu bar label */
 "menubar_time_left" = "%@ left";
 "menubar_today_tokens" = "Today %@ tok";
