@@ -8,8 +8,10 @@ struct MenuBarLabel: View {
             HStack(spacing: 5) {
                 Image(systemName: "gauge.with.dots.needle.50percent")
                 MenuBarProgressBar(progress: pct(s), tint: state.status.tint)
-                    .frame(width: 52, height: 7)
-                Text("\(Int(pct(s) * 100))%")
+                    .frame(width: 44, height: 7)
+                Text(String.localizedStringWithFormat(
+                    NSLocalizedString("menubar_budget_pct", comment: ""),
+                    Int(pct(s) * 100)))
                     .font(.system(size: 11, weight: .medium).monospacedDigit())
             }
         } else {

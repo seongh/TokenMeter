@@ -124,6 +124,7 @@
 "menubar_time_left" = "%@ 남음";
 "menubar_today_tokens" = "오늘 %@ 토큰";
 "menubar_today_books" = "오늘 ≈ 책 %lld권";
+"menubar_budget_pct" = "예산 %lld%%";
 "tokens_hint" = "토큰 1개 ≈ 한국어 1~2글자";
 
 /* Format units */
