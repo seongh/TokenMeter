@@ -30,24 +30,41 @@ struct MenuBarLabel: View {
         }
     }
 
-    private func pct(_ s: SessionBlock) -> Double {
-        min(1.0, Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget)))
+    private func pctRaw(_ s: SessionBlock) -> Double {
+        Double(s.totals.totalTokens) / Double(max(1, state.sessionTokenBudget))
     }
 
-    /// Tiny direction arrow encoding current burn rate vs 7-day baseline.
-    /// Hidden when there's no baseline yet (early in a session, or new install).
+    private func pct(_ s: SessionBlock) -> Double {
+        min(1.0, pctRaw(s))
+    }
+
+    /// Burn-rate direction arrow vs the 7-day baseline. Thresholds tuned so a
+    /// moderately faster pace is visible early (amber) before it becomes
+    /// critical (red), instead of a binary "fine / on fire".
     @ViewBuilder
     private var trendArrow: some View {
         if let ratio = state.currentBurnRatio() {
-            if ratio >= 1.5 {
+            if ratio >= 1.25 {
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.red)
-            } else if ratio <= 0.66 {
+                    .foregroundStyle(ratio >= 1.75 ? .red : .orange)
+            } else if ratio <= 0.8 {
                 Image(systemName: "arrow.down.right")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.green)
             }
+        }
+    }
+
+    /// Tiny red plus appended once the user crosses 100% of their own session
+    /// budget. Pairs with the deeper-red bar fill to make over-budget
+    /// categorically different from "near budget".
+    @ViewBuilder
+    private func overBudgetIndicator(_ pctRaw: Double) -> some View {
+        if pctRaw > 1.0 {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.red)
         }
     }
 
