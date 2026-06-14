@@ -26,14 +26,25 @@ struct AnimatedCharacter: View {
     let size: CGFloat
 
     var body: some View {
-        // Stable frame so motion never reshapes the menu bar layout, but
-        // large enough that ±6pt motion + 1.2× scale stay inside the box.
-        Text(emoji)
-            .font(.system(size: size))
-            .fixedSize()
-            .modifier(EmojiMotion(motion: motion))
-            .frame(width: size + 14, height: size + 8, alignment: .center)
+        Group {
+            if motion == .superman {
+                // Superman gets a custom hand-drawn glyph (side profile,
+                // outstretched arm, rippling cape) — emoji can't show that.
+                SupermanGlyph(size: size)
+                    .modifier(EmojiMotion(motion: motion))
+            } else {
+                Text(emoji)
+                    .font(.system(size: size))
+                    .fixedSize()
+                    .modifier(EmojiMotion(motion: motion))
+            }
+        }
+        .frame(width: superman ? size * 2.0 + 6 : size + 14,
+               height: size + 8,
+               alignment: .center)
     }
+
+    private var superman: Bool { motion == .superman }
 
 }
 
