@@ -26,15 +26,34 @@ struct AnimatedCharacter: View {
     let size: CGFloat
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: motion == .asleep)) { context in
+        // Stable frame so motion never reshapes the menu bar layout.
+        // height matches the natural emoji line height; width is just wide
+        // enough for the maximum horizontal swing (~3pt either side).
+        Text(emoji)
+            .font(.system(size: size))
+            .fixedSize()
+            .modifier(EmojiMotion(motion: motion))
+            .frame(width: size + 2, height: size + 2, alignment: .center)
+    }
+
+}
+
+/// Reads time from a single TimelineView and applies motion transforms.
+/// Keeping this as a separate ViewModifier means the AnimatedCharacter
+/// outer view has a stable, predictable layout footprint — its frame is
+/// computed once and motion only affects the rendered emoji inside.
+struct EmojiMotion: ViewModifier {
+    let motion: AnimatedCharacter.Motion
+
+    func body(content: Content) -> some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0,
+                                paused: motion == .asleep)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
-            Text(emoji)
-                .font(.system(size: size))
+            content
                 .offset(x: offsetX(t), y: offsetY(t))
                 .scaleEffect(scale(t))
                 .rotationEffect(.degrees(rotation(t)))
         }
-        .frame(width: size + 6, height: size + 4)
     }
 
     // MARK: - Per-axis motion
