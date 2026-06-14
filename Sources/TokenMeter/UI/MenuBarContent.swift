@@ -5,9 +5,9 @@ struct MenuBarLabel: View {
 
     var body: some View {
         if let s = state.activeSession {
+            let avatar = avatar(for: s)
             HStack(spacing: 5) {
-                Text(characterEmoji(for: s))
-                    .font(.system(size: 14))
+                AnimatedCharacter(emoji: avatar.emoji, motion: avatar.motion, size: 14)
                 MenuBarProgressBar(
                     progress: pct(s),
                     isOver: pctRaw(s) > 1.0,
@@ -23,7 +23,7 @@ struct MenuBarLabel: View {
         } else {
             // No active session — fall back to today's volume as a book count.
             HStack(spacing: 4) {
-                Text("💤").font(.system(size: 14))
+                AnimatedCharacter(emoji: "💤", motion: .asleep, size: 14)
                 Text(idleLabel)
                     .monospacedDigit()
                     .font(.system(size: 12, weight: .medium))
@@ -47,29 +47,21 @@ struct MenuBarLabel: View {
     ///   💪  budget 66-100%                 "hulk mode"
     ///   🦸  burn rate ≥ 1.75×              "superman, sudden speed"
     ///   🚀  budget > 100% AND fast          "lift-off"
-    private func characterEmoji(for s: SessionBlock) -> String {
+    /// Pick both emoji and motion together — same decision tree, so the
+    /// character on screen always matches the way it moves.
+    private func avatar(for s: SessionBlock) -> (emoji: String, motion: AnimatedCharacter.Motion) {
         let pct = pctRaw(s)
         let ratio = state.currentBurnRatio() ?? 1.0
         let isFast = ratio >= 1.75
         let isOverBudget = pct > 1.0
         let isHighBudget = pct >= 0.66
 
-        // Both signals extreme → liftoff
-        if isOverBudget && isFast { return "🚀" }
-
-        // Pure speed spike: superman
-        if isFast { return "🦸" }
-
-        // Sustained high accumulation: hulk
-        if isHighBudget { return "💪" }
-
-        // Moderately faster than usual but still ramping
-        if ratio >= 1.25 { return "🏃‍♂️" }
-
-        // Active but unremarkable
-        if pct >= 0.30 { return "🏃" }
-
-        return "🚶"
+        if isOverBudget && isFast { return ("🚀", .rocket) }
+        if isFast                 { return ("🦸", .superman) }
+        if isHighBudget           { return ("💪", .hulk) }
+        if ratio >= 1.25          { return ("🏃‍♂️", .sprinting) }
+        if pct >= 0.30            { return ("🏃", .running) }
+        return                            ("🚶", .walking)
     }
 
     private func pctRaw(_ s: SessionBlock) -> Double {
