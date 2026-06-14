@@ -6,7 +6,8 @@ struct MenuBarLabel: View {
     var body: some View {
         if let s = state.activeSession {
             HStack(spacing: 5) {
-                Image(systemName: "gauge.with.dots.needle.50percent")
+                Text(characterEmoji(for: s))
+                    .font(.system(size: 14))
                 MenuBarProgressBar(
                     progress: pct(s),
                     isOver: pctRaw(s) > 1.0,
@@ -22,12 +23,53 @@ struct MenuBarLabel: View {
         } else {
             // No active session — fall back to today's volume as a book count.
             HStack(spacing: 4) {
-                Image(systemName: "gauge.with.dots.needle.0percent")
+                Text("💤").font(.system(size: 14))
                 Text(idleLabel)
                     .monospacedDigit()
                     .font(.system(size: 12, weight: .medium))
             }
         }
+    }
+
+    /// The character that represents the user's current intensity.
+    ///
+    /// Two signals encode different things:
+    ///   - **budget %** → cumulative load → strength metaphor (헐크)
+    ///   - **burn rate** → sudden acceleration → speed metaphor (슈퍼맨)
+    ///
+    /// When both are high it's a rocket. This way you can tell at a glance
+    /// whether you've been grinding (헐크) or just had a single big burst
+    /// (슈퍼맨), without reading any numbers.
+    ///
+    ///   🚶  budget < 30%, normal pace      "just started"
+    ///   🏃  budget 30-66%, normal pace     "running"
+    ///   🏃‍♂️‍➡️  burn rate 1.25-1.75×           "picking up pace"
+    ///   💪  budget 66-100%                 "hulk mode"
+    ///   🦸  burn rate ≥ 1.75×              "superman, sudden speed"
+    ///   🚀  budget > 100% AND fast          "lift-off"
+    private func characterEmoji(for s: SessionBlock) -> String {
+        let pct = pctRaw(s)
+        let ratio = state.currentBurnRatio() ?? 1.0
+        let isFast = ratio >= 1.75
+        let isOverBudget = pct > 1.0
+        let isHighBudget = pct >= 0.66
+
+        // Both signals extreme → liftoff
+        if isOverBudget && isFast { return "🚀" }
+
+        // Pure speed spike: superman
+        if isFast { return "🦸" }
+
+        // Sustained high accumulation: hulk
+        if isHighBudget { return "💪" }
+
+        // Moderately faster than usual but still ramping
+        if ratio >= 1.25 { return "🏃‍♂️" }
+
+        // Active but unremarkable
+        if pct >= 0.30 { return "🏃" }
+
+        return "🚶"
     }
 
     private func pctRaw(_ s: SessionBlock) -> Double {
