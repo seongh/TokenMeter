@@ -26,14 +26,13 @@ struct AnimatedCharacter: View {
     let size: CGFloat
 
     var body: some View {
-        // Stable frame so motion never reshapes the menu bar layout.
-        // height matches the natural emoji line height; width is just wide
-        // enough for the maximum horizontal swing (~3pt either side).
+        // Stable frame so motion never reshapes the menu bar layout, but
+        // large enough that ±6pt motion + 1.2× scale stay inside the box.
         Text(emoji)
             .font(.system(size: size))
             .fixedSize()
             .modifier(EmojiMotion(motion: motion))
-            .frame(width: size + 2, height: size + 2, alignment: .center)
+            .frame(width: size + 14, height: size + 8, alignment: .center)
     }
 
 }
@@ -61,37 +60,39 @@ struct EmojiMotion: ViewModifier {
     private func offsetY(_ t: TimeInterval) -> CGFloat {
         switch motion {
         case .asleep:    return 0
-        case .walking:   return sin(t * 3) * 1.0
-        case .running:   return -abs(sin(t * 7)) * 2.0       // small hops
-        case .sprinting: return -abs(sin(t * 10)) * 2.5
-        case .hulk:      return sin(t * 4) * 0.6
-        case .superman:  return sin(t * 2) * 1.5             // smooth float
-        case .rocket:    return -abs(sin(t * 8)) * 2.5 - 0.5 // rises with bounce
+        case .walking:   return sin(t * 3) * 3.0             // gentle stroll
+        case .running:   return -abs(sin(t * 8)) * 4.0       // distinct hops
+        case .sprinting: return -abs(sin(t * 11)) * 4.5
+        case .hulk:      return sin(t * 5) * 1.5
+        case .superman:  return sin(t * 2.5) * 3.0           // smooth float
+        case .rocket:    return -abs(sin(t * 9)) * 5.0 - 1.0 // rises hard
         }
     }
 
     private func offsetX(_ t: TimeInterval) -> CGFloat {
         switch motion {
-        case .superman: return sin(t * 2) * 3.0              // side-to-side flight
-        case .rocket:   return cos(t * 11) * 0.7             // tiny lateral jitter
+        case .superman: return sin(t * 2) * 6.0              // strong side-to-side flight
+        case .rocket:   return cos(t * 14) * 1.5             // shake from takeoff
         default:        return 0
         }
     }
 
     private func scale(_ t: TimeInterval) -> CGFloat {
         switch motion {
-        case .hulk:   return 1.0 + abs(sin(t * 4)) * 0.12    // muscle pulse
-        case .rocket: return 1.0 + sin(t * 6) * 0.05
-        default:      return 1.0
+        case .hulk:      return 1.0 + abs(sin(t * 5)) * 0.20 // muscle pulse, big
+        case .rocket:    return 1.0 + sin(t * 7) * 0.08
+        case .superman:  return 1.0 + abs(sin(t * 2)) * 0.05 // breath of speed
+        default:         return 1.0
         }
     }
 
     private func rotation(_ t: TimeInterval) -> Double {
         switch motion {
-        case .running:   return sin(t * 7) * 5               // forward/back tilt
-        case .sprinting: return sin(t * 10) * 8
-        case .hulk:      return sin(t * 8) * 2               // tiny shake
-        case .superman:  return sin(t * 2) * 4               // banking turn
+        case .running:   return sin(t * 8) * 10              // visible lean
+        case .sprinting: return sin(t * 11) * 14
+        case .hulk:      return sin(t * 10) * 3              // visible shake
+        case .superman:  return sin(t * 2) * 8               // banking turn
+        case .rocket:    return cos(t * 14) * 4              // shaking
         default:         return 0
         }
     }
